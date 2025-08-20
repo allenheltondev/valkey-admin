@@ -1,8 +1,6 @@
-import { WebSocketServer, WebSocket } from "ws";
-import { GlideClient, Decoder } from "@valkey/valkey-glide";
-import { setConnecting, setConnected, setError } from "../../../common/features/valkeyconnection/valkeyConnectionSlice.ts"
-import { sendFulfilled, sendFailed, sendPending } from "../../../common/features/valkeycommand/valkeycommandSlice.ts";
-import { setData } from "../../../common/features/valkeyinfo/valkeyInfoSlice.ts";
+import { WebSocketServer, WebSocket } from "ws"
+import { GlideClient, Decoder } from "@valkey/valkey-glide"
+import {VALKEY} from "@common/constants.ts"
 
 const wss = new WebSocketServer({ port: 8080 })
 
@@ -15,13 +13,13 @@ wss.on('connection', (ws: WebSocket) => {
     ws.on('message', async (message) => {
         const action = JSON.parse(message.toString());
 
-        if (action.type === setConnecting.type) {
+        if (action.type === VALKEY.setConnecting) {
             client = await connectToValkey(ws, action.payload)
         }
-        if (action.type === sendPending.type && client) {
+        if (action.type === VALKEY.sendPending && client) {
             await sendValkeyRunCommand(client, ws, action.payload)
         }
-        if (action.type === setData.type && client) {
+        if (action.type === VALKEY.setData && client) {
             setDashboardData(client, ws)
         }
     })
@@ -44,7 +42,7 @@ async function connectToValkey(ws: WebSocket, payload: { host: string, port: num
             host: payload.host,
             port: payload.port,
         },
-    ];
+    ]
     try {
         const client = await GlideClient.createClient({
             addresses,
@@ -53,18 +51,18 @@ async function connectToValkey(ws: WebSocket, payload: { host: string, port: num
         })
 
         ws.send(JSON.stringify({
-            type: setConnected.type,
+            type: VALKEY.setConnected,
             payload: {
                 status: true,
             },
-        }));
+        }))
 
         return client;
     }
     catch (err) {
         console.log("Error connecting to Valkey", err)
         ws.send(JSON.stringify({
-            type: setError.type,
+            type: VALKEY.setError,
             payload: err
         }))
     }
@@ -84,7 +82,7 @@ async function setDashboardData(client: GlideClient, ws: WebSocket) {
     }, {} as Record<string, string>)
 
     ws.send(JSON.stringify({
-        type: setData.type,
+        type: VALKEY.setData,
         payload: {
             info: info,
             memory: memoryStats,
@@ -109,17 +107,17 @@ async function sendValkeyRunCommand(client: GlideClient, ws: WebSocket, payload:
         console.log("Raw response is: ", rawResponse)
         if (rawResponse.includes("ResponseError")) {
             ws.send(JSON.stringify({
-                type: sendFailed.type,
+                type: VALKEY.sendFailed,
                 payload: rawResponse
             }));
         }
         ws.send(JSON.stringify({
-            type: sendFulfilled.type,
+            type: VALKEY.sendFulfilled,
             payload: response
         }))
     } catch (err) {
         ws.send(JSON.stringify({
-            type: sendFailed.type,
+            type: VALKEY.sendFailed,
             payload: err
         }))
         console.log("Error sending command to Valkey", err)
