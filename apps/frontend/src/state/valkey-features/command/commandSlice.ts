@@ -3,7 +3,7 @@ import {VALKEY} from "@common/src/constants.ts"
 
 type CmdMeta = { command: string }
 
-interface CommandMetadata {
+export interface CommandMetadata {
     command: string
     error: string | null
     response: string | null

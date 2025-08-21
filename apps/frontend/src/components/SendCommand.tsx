@@ -1,9 +1,9 @@
 import { ChevronRight } from "lucide-react"
-import { useRef, useState, KeyboardEvent } from "react"
+import React, { useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { formatTimestamp } from "@common/src/time-utils.ts"
 import { getNth, selectAllCommands } from "@/state/valkey-features/command/commandSelectors.ts"
-import { sendRequested } from "@/state/valkey-features/command/commandSlice.ts"
+import { sendRequested, type CommandMetadata } from "@/state/valkey-features/command/commandSlice.ts"
 import { useAppDispatch } from '../hooks/hooks'
 import { Textarea } from "./ui/textarea"
 import { Button } from "./ui/button"
@@ -16,14 +16,14 @@ export function SendCommand() {
     const [commandIndex, setCommandIndex] = useState<number>(0)
 
     const allCommands = useSelector(selectAllCommands)
-    const { error, response } = useSelector(getNth(commandIndex))
+    const { error, response } = useSelector(getNth(commandIndex)) as CommandMetadata
 
     const onSubmit = () => {
         dispatch(sendRequested({ command: text }))
         setCommandIndex(length)
     }
 
-    const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter") {
             e.preventDefault()
             onSubmit()
