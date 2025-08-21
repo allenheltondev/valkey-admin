@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {VALKEY} from "@common/src/constants.ts"
 
-const valkeyInfoSlice = createSlice({
+const infoSlice = createSlice({
     name: VALKEY.STATS.name,
     initialState: {
         error: null,
@@ -32,5 +32,5 @@ const valkeyInfoSlice = createSlice({
     }
 })
 
-export default valkeyInfoSlice.reducer
-export const { setLastUpdated, setData, setError } = valkeyInfoSlice.actions
+export default infoSlice.reducer
+export const { setLastUpdated, setData, setError } = infoSlice.actions

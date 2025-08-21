@@ -1,22 +1,29 @@
-import {useRef, useState} from 'react'
-import { useSelector } from 'react-redux'
-import { sendPending } from '@/state/valkey-features/command/valkeyCommandSlice.ts'
-import {selectError, selectResponse} from '@/state/valkey-features/command/valkeyCommandSelectors.ts'
+import { ChevronRight } from "lucide-react"
+import { useRef, useState, KeyboardEvent } from "react"
+import { useSelector } from "react-redux"
+import { formatTimestamp } from "@common/src/time-utils.ts"
+import { getNth, selectAllCommands } from "@/state/valkey-features/command/commandSelectors.ts"
+import { sendRequested } from "@/state/valkey-features/command/commandSlice.ts"
 import { useAppDispatch } from '../hooks/hooks'
 import { Textarea } from "./ui/textarea"
-import { Button } from './ui/button'
+import { Button } from "./ui/button"
 import RouteContainer from "@/components/ui/route-container.tsx"
-import * as React from "react"
 
 export function SendCommand() {
     const dispatch = useAppDispatch()
+
     const [text, setText] = useState("")
-    const response = useSelector(selectResponse())
-    const error = useSelector(selectError())
+    const [commandIndex, setCommandIndex] = useState<number>(0)
 
-    const onSubmit =() => dispatch(sendPending({ command: text, pending: true }))
+    const allCommands = useSelector(selectAllCommands)
+    const { error, response } = useSelector(getNth(commandIndex))
 
-    const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const onSubmit = () => {
+        dispatch(sendRequested({ command: text }))
+        setCommandIndex(length)
+    }
+
+    const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter") {
             e.preventDefault()
             onSubmit()
@@ -30,11 +37,34 @@ export function SendCommand() {
 
     return (
         <RouteContainer title="Send Command">
-            <pre className="flex-1 overflow-auto w-full rounded-md bg-muted mx-auto p-4 whitespace-pre-wrap break-words overflow-x-auto">
-                <code className={`text-sm font-mono ${error ? "text-destructive" : "text-muted-foreground"}`}>
-                    {JSON.stringify(error ?? response, null, 4)}
-                </code>
-            </pre>
+            <div className="flex-1 overflow-auto w-full flex flex-row gap-4">
+                <pre className="rounded-md flex-1 bg-muted p-4 whitespace-pre-wrap break-words overflow-x-auto relative">
+                    <h3 className="text-muted-foreground sticky top-0 text-right">Response</h3>
+                    <code className={`text-sm font-mono ${error ? "text-destructive" : "text-muted-foreground"}`}>
+                        {JSON.stringify(error ?? response, null, 4)}
+                    </code>
+                </pre>
+
+                <div className="flex flex-col whitespace-pre-wrap break-words bg-muted rounded-md p-4 font-mono gap-2 w-60 relative">
+                    <h3 className="text-muted-foreground sticky top-0">History</h3>
+                    {
+                        allCommands.map(({ command, timestamp }, i) =>
+                            <Button
+                                className={`w-full overflow-hidden justify-start ${i === commandIndex ? "pointer-events-none" : ""}`}
+                                key={timestamp}
+                                onClick={() => {
+                                    setText("")
+                                    setCommandIndex(i)
+                                }}
+                                variant={i === commandIndex ? "ghost" : "outline"}
+                            >
+                                { i === commandIndex && <ChevronRight /> }
+                                <span className="shrink-0 mr-2">{formatTimestamp(timestamp)}</span>
+                                <span className="truncate">{command}</span>
+                            </Button>)
+                    }
+                </div>
+            </div>
             <div className="flex flex-row gap-4">
                 <Textarea
                     className="resize-none whitespace-pre-wrap break-words"
@@ -52,37 +82,6 @@ export function SendCommand() {
                     Send
                 </Button>
             </div>
-                {/*<div className="w-full h-full">*/}
-                {/*    <div className="flex flex-col items-center gap-4">*/}
-                {/*        <Textarea*/}
-                {/*            placeholder="Type your Valkey command here"*/}
-                {/*            value={text}*/}
-                {/*            onChange={(e) => setText(e.target.value)}*/}
-                {/*            className="w-[600px] h-24 resize-none whitespace-pre-wrap break-words"*/}
-                {/*        />*/}
-                {/*        <Button*/}
-                {/*            onClick={() => dispatch(sendPending({ command: text, pending: true }))}*/}
-                {/*            className="h-12 w-32"*/}
-                {/*        >*/}
-                {/*            Send*/}
-                {/*        </Button>*/}
-                {/*    </div>*/}
-
-                {/*    {response && (*/}
-                {/*        <pre className="rounded-md bg-muted p-4 overflow-x-auto text-left max-w-[600px] mx-auto">*/}
-                {/*            <code className="text-sm font-mono text-muted-foreground">*/}
-                {/*                {JSON.stringify(response, null, 4)}*/}
-                {/*            </code>*/}
-                {/*        </pre>*/}
-                {/*    )}*/}
-                {/*    {error && (*/}
-                {/*        <pre className="rounded-md bg-red-100 border border-red-400 text-red-800 p-4 overflow-x-auto text-left max-w-[600px] mx-auto">*/}
-                {/*            <code className="text-sm font-mono whitespace-pre-wrap break-words">*/}
-                {/*                {error['message']}*/}
-                {/*            </code>*/}
-                {/*        </pre>*/}
-                {/*    )}*/}
-                {/*</div>*/}
         </RouteContainer>
 )
 }

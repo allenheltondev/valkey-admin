@@ -1,9 +1,9 @@
 import { type PayloadAction, type Middleware } from '@reduxjs/toolkit';
-import { setError as setError, setConnecting, setConnected } from '@/state/valkey-features/connection/valkeyConnectionSlice.ts';
-import { selectConnected, selectConnecting } from '../../valkey-features/connection/valkeyConnectionSelectors.ts'
+import { setError as setError, setConnecting, setConnected } from '@/state/valkey-features/connection/connectionSlice.ts';
+import { selectConnected, selectConnecting } from '../../valkey-features/connection/connectionSelectors.ts'
 import { getSocket } from '../ws/wsMiddleware.ts';
-import { sendFailed, sendPending } from '@/state/valkey-features/command/valkeyCommandSlice.ts';
-import { setData } from '@/state/valkey-features/info/valkeyInfoSlice.ts';
+import { sendFailed, sendRequested } from '@/state/valkey-features/command/commandSlice.ts';
+import { setData } from '@/state/valkey-features/info/infoSlice.ts';
 import { toast } from 'sonner';
 
 export const valkeyMiddleware: Middleware = store => next => async (action) => {
@@ -35,7 +35,7 @@ export const valkeyMiddleware: Middleware = store => next => async (action) => {
         }
         return next(action);
     }
-    if (typedAction.type === sendPending.type) {
+    if (typedAction.type === sendRequested.type) {
         try {
             socket.send(JSON.stringify(typedAction))
 

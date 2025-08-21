@@ -12,17 +12,15 @@ wss.on('connection', (ws: WebSocket) => {
 
     ws.on('message', async (message) => {
         const action = JSON.parse(message.toString());
-        console.log("on message", action.type === VALKEY.CONNECTION.setConnecting, action)
 
         if (action.type === VALKEY.CONNECTION.setConnecting) {
             client = await connectToValkey(ws, action.payload)
         }
-        if (action.type === VALKEY.COMMAND.sendPending && client) {
+        if (action.type === VALKEY.COMMAND.sendRequested && client) {
             await sendValkeyRunCommand(client, ws, action.payload)
         }
         if (action.type === VALKEY.STATS.setData && client) {
-            console.log("here now")
-            setDashboardData(client, ws)
+            await setDashboardData(client, ws)
         }
     })
     ws.onerror = (err) => {

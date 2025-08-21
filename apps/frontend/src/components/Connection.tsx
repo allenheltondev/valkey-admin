@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { setRedirected, setConnecting as valkeySetConnecting } from '@/state/valkey-features/connection/valkeyConnectionSlice';
-import { selectConnected, selectRedirected } from '@/state/valkey-features/connection/valkeyConnectionSelectors.ts';
+import { setRedirected, setConnecting as valkeySetConnecting } from '@/state/valkey-features/connection/connectionSlice.ts';
+import { selectConnected, selectRedirected } from '@/state/valkey-features/connection/connectionSelectors.ts';
 import { useAppDispatch } from '../hooks/hooks';
 import { Button } from "./ui/button"
 import {

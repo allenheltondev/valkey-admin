@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { selectData } from "@/state/valkey-features/info/valkeyInfoSelectors.ts";
+import { selectData } from "@/state/valkey-features/info/infoSelectors.ts";
 import { Card } from "./ui/card";
 import RouteContainer from "@/components/ui/route-container.tsx"
 

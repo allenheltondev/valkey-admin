@@ -1,4 +1,4 @@
-import { selectConnected } from '@/state/valkey-features/connection/valkeyConnectionSelectors.ts';
+import { selectConnected } from '@/state/valkey-features/connection/connectionSelectors.ts';
 import { useSelector } from 'react-redux';
 import { Navigate, Outlet } from 'react-router';
 

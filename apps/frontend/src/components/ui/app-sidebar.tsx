@@ -8,8 +8,8 @@ import {
     SidebarMenuItem,
     SidebarMenuButton
 } from "@/components/ui/sidebar"
-import { setConnected as valkeySetConnected } from "@/state/valkey-features/connection/valkeyConnectionSlice"
-import { selectConnected } from "@/state/valkey-features/connection/valkeyConnectionSelectors.ts"
+import { setConnected as valkeySetConnected } from "@/state/valkey-features/connection/connectionSlice.ts"
+import { selectConnected } from "@/state/valkey-features/connection/connectionSelectors.ts"
 import { useSelector } from "react-redux"
 import { Button } from "./button"
 import { useAppDispatch } from "@/hooks/hooks"
