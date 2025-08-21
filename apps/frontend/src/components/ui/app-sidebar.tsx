@@ -26,7 +26,8 @@ export function AppSidebar() {
     }
     return (
         <Sidebar className="app-sidebar h-dvh flex flex-col">
-            <SidebarHeader className="text-4xl font-bold text-center p-4">
+            <SidebarHeader className="text-4xl font-bold text-center p-4 flex flex-row items-center">
+                <img className="w-12" src="../../assets/img/logo.png" alt="logo" />
                 Skyscope
             </SidebarHeader>
 
