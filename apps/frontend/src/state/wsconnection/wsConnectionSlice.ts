@@ -1,3 +1,4 @@
+import { CONNECTED } from "@common/src/constants";
 import { createSlice } from "@reduxjs/toolkit";
 
 const wsConnectionSlice = createSlice({
@@ -12,7 +13,7 @@ const wsConnectionSlice = createSlice({
             state.errorMessage = null;
         },
         connectFulfilled: (state) => {
-            state.status = "Connected";
+            state.status = CONNECTED;
             state.errorMessage = null;
         },
         connectRejected: (state, action) => {

@@ -38,3 +38,5 @@ export const VALKEY = {
         setData: "setData",
     } as const),
 } as const
+
+export const CONNECTED = "Connected"

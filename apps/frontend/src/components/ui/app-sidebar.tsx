@@ -10,9 +10,10 @@ import { selectStatus } from "@/state/valkey-features/connection/connectionSelec
 import { useSelector } from "react-redux";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
+import { CONNECTED } from "@common/src/constants";
 
 export function AppSidebar() {
-  const isConnected = useSelector(selectStatus) === "Connected";
+  const isConnected = useSelector(selectStatus) === CONNECTED;
   const location = useLocation();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -28,10 +29,7 @@ export function AppSidebar() {
       className={`bg-white ${isExpanded ? "w-52 items-start" : "w-18 items-center"
         } h-screen p-4 shadow-lg border-r-2 flex flex-col justify-between transition-all duration-300 items-center relative`}
     >
-      <div
-        className={`flex ${isExpanded ? "items-start" : "items-center"
-          }  flex-col`}
-      >
+      <div className={`flex ${isExpanded ? "items-start" : "items-center"}  flex-col`}>
         {/* Header */}
         <div className="flex items-center" title="Skyscope">
           <img src="../../assets/img/logo.png" alt="logo" className="h-8" />

@@ -1,4 +1,4 @@
-import { getSocket } from "./wsConnectionEpic"
+import { getSocket } from "./wsEpics"
 import { selectStatus, } from "../valkey-features/connection/connectionSelectors"
 import { connectPending, connectFulfilled, resetConnection } from "../valkey-features/connection/connectionSlice"
 import { sendRequested } from "../valkey-features/command/commandSlice"
@@ -7,11 +7,12 @@ import { setData } from "../valkey-features/info/infoSlice";
 
 import { action$ } from "../middleware/rxjsMiddleware/rxjsMiddlware"
 import type { Store } from "@reduxjs/toolkit"
+import { CONNECTED } from "@common/src/constants";
 
 export const connectionEpic = (store: Store) => action$.pipe(
     filter((action) => {
         const state = store.getState()
-        return selectStatus(state) != "Connected" && action.type === connectPending.type
+        return selectStatus(state) != CONNECTED && action.type === connectPending.type
     }),
     tap((action) => {
         const socket = getSocket()
@@ -43,7 +44,6 @@ export const disconnectEpic = () =>
     action$.pipe(
         filter((action) => action.type === resetConnection.type),
         tap((action) => {
-            console.log("We're inside the disconnect epic")
             const socket = getSocket()
             socket.next(action)
         }),

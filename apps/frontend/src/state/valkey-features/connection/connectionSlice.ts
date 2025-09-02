@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { VALKEY } from "@common/src/constants.ts"
+import { CONNECTED, VALKEY } from "@common/src/constants.ts"
 
 const connectionSlice = createSlice({
     name: VALKEY.CONNECTION.name,
@@ -14,7 +14,7 @@ const connectionSlice = createSlice({
             state.errorMessage = null;
         },
         connectFulfilled: (state) => {
-            state.status = "Connected";
+            state.status = CONNECTED;
             state.errorMessage = null;
         },
         connectRejected: (state, action) => {
