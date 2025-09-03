@@ -14,6 +14,7 @@ import { resetConnection } from "@/state/valkey-features/connection/connectionSl
 import { HousePlug, Unplug, Pencil } from "lucide-react";
 import ConnectionForm from "./ui/connection-form";
 import EditForm from "./ui/edit-form";
+import { CONNECTED } from "@common/src/constants"
 
 export function Connection() {
   const dispatch = useAppDispatch();
@@ -24,7 +25,7 @@ export function Connection() {
   const connectionDetails = useSelector(selectConnectionDetails);
   const { server_name } = useSelector(selectData);
 
-  const isConnected = useSelector(selectStatus) === "Connected";
+  const isConnected = useSelector(selectStatus) === CONNECTED
   const hasRedirected = useSelector(selectRedirected);
 
   const handleDisconnect = () => {
