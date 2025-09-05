@@ -7,6 +7,7 @@ type ConnectionFormProps = {
 
 import { connectPending } from "@/state/valkey-features/connection/connectionSlice.ts";
 import { useState } from "react";
+import {sanitizeUrl} from "@common/src/url-utils.ts"
 
 function ConnectionForm({ onClose }: ConnectionFormProps) {
   const dispatch = useAppDispatch();
@@ -17,7 +18,7 @@ function ConnectionForm({ onClose }: ConnectionFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const connectionId = `${host}:${port}`;
+    const connectionId = sanitizeUrl(`${host}-${port}`)
     dispatch(
       connectPending({ host, port, username, password, connectionId })
     );

@@ -1,14 +1,12 @@
-import { useState, useEffect } from "react";
-import { setRedirected } from "@/state/valkey-features/connection/connectionSlice.ts";
+import { useState, useEffect } from "react"
+import { useSelector } from "react-redux"
+import { useNavigate } from "react-router"
+
 import {
   selectStatus,
   selectConnectionDetails,
-  selectRedirected,
 } from "@/state/valkey-features/connection/connectionSelectors.ts";
 import { useAppDispatch } from "../hooks/hooks";
-
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router";
 import { selectData } from "@/state/valkey-features/info/infoSelectors.ts";
 import { resetConnection } from "@/state/valkey-features/connection/connectionSlice.ts";
 import { HousePlug, Unplug, Pencil } from "lucide-react";
@@ -26,18 +24,16 @@ export function Connection() {
   const { server_name } = useSelector(selectData);
 
   const isConnected = useSelector(selectStatus) === CONNECTED;
-  const hasRedirected = useSelector(selectRedirected);
 
   const handleDisconnect = () => {
     dispatch(resetConnection());
   };
 
   useEffect(() => {
-    if (isConnected && !hasRedirected) {
-      dispatch(setRedirected(true));
-      setShowConnectionForm(false);
+    if (isConnected) {
+      setShowConnectionForm(false)
     }
-  }, [isConnected, navigate, hasRedirected, dispatch]);
+  }, [isConnected, navigate, dispatch]);
 
   return (
     <div className="p-4 relative min-h-screen flex flex-col">
@@ -62,7 +58,7 @@ export function Connection() {
         <table className="min-w-full table-fixed divide-y">
           <thead className="text-sm bg-gray-200 sticky top-0 z-10 border-y-1 border-gray-300">
             <tr className="">
-              <th className="w-1/4 font-medium py-1 text-start">
+              <th className="w-1/4 font-medium py-1 pl-2 text-start">
                 Database Name
               </th>
               <th className="w-1/4 font-medium py-1 text-center">Host:Port</th>

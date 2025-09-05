@@ -13,7 +13,6 @@ interface ConnectionDetails {
 interface ConnectionState {
     status: ConnectionStatus;
     errorMessage: string | null;
-    hasRedirected: boolean;
     connectionDetails: ConnectionDetails;
 }
 
@@ -41,7 +40,6 @@ const connectionSlice = createSlice({
             state.connections[connectionId] = {
                 status: "Connecting",
                 errorMessage: null,
-                hasRedirected: false,
                 connectionDetails: { host, port, username, password },
             };
         },
@@ -56,10 +54,6 @@ const connectionSlice = createSlice({
             const { connectionId } = action.payload;
             state.connections[connectionId].status = "Error";
             state.connections[connectionId].errorMessage = action.payload || "Unknown error";
-        },
-        setRedirected: (state, action) => {
-            const { connectionId } = action.payload;
-            state.connections[connectionId].hasRedirected = action.payload;
         },
         resetConnection: (state, action) => {
             const { connectionId } = action.payload;
@@ -77,4 +71,4 @@ const connectionSlice = createSlice({
 })
 
 export default connectionSlice.reducer
-export const { connectPending, connectFulfilled, connectRejected, setRedirected, resetConnection, updateConnectionDetails } = connectionSlice.actions
+export const { connectPending, connectFulfilled, connectRejected, resetConnection, updateConnectionDetails } = connectionSlice.actions

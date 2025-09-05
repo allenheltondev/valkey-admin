@@ -1,52 +1,60 @@
-import { getSocket } from "./wsEpics"
-import { selectStatus, } from "../valkey-features/connection/connectionSelectors"
-import { connectPending, connectFulfilled, resetConnection } from "../valkey-features/connection/connectionSlice"
-import { sendRequested } from "../valkey-features/command/commandSlice"
-import { filter, tap, ignoreElements } from 'rxjs/operators';
-import { setData } from "../valkey-features/info/infoSlice";
-
-import { action$ } from "../middleware/rxjsMiddleware/rxjsMiddlware"
 import type { Store } from "@reduxjs/toolkit"
-import { CONNECTED } from "@common/src/constants";
+import { merge } from "rxjs"
+import { ignoreElements, tap } from "rxjs/operators"
+import { getSocket } from "./wsEpics"
+import { connectFulfilled, connectPending, resetConnection } from "../valkey-features/connection/connectionSlice"
+import { sendRequested } from "../valkey-features/command/commandSlice"
+import { setData } from "../valkey-features/info/infoSlice"
+import { action$, select } from "../middleware/rxjsMiddleware/rxjsMiddlware"
+import history from "@/history.ts"
 
-export const connectionEpic = (store: Store) => action$.pipe(
-    filter((action) => {
-        const state = store.getState()
-        return selectStatus(state) != CONNECTED && action.type === connectPending.type
-    }),
-    tap((action) => {
+export const connectionEpic = (store: Store) =>
+  merge(
+    action$.pipe(
+      select(connectPending),
+      tap((action) => {
         const socket = getSocket()
         console.log("Sending message to server from connecting epic...")
         socket.next(action)
-    }),
-    ignoreElements()
-)
+      }),
+      ignoreElements(),
+    ),
+
+    action$.pipe(
+      select(connectFulfilled),
+      tap(action => {
+        console.log("here")
+        console.log(history)
+        history.navigate(`/${action.payload.connectionId}/dashboard`)
+      }),
+    ),
+  )
+
 
 export const sendRequestEpic = () =>
-    action$.pipe(
-        filter((action) => action.type === sendRequested.type),
-        tap((action) => {
-            const socket = getSocket()
-            socket.next(action)
-        }),
-    )
+  action$.pipe(
+    select(sendRequested),
+    tap((action) => {
+      const socket = getSocket()
+      socket.next(action)
+    }),
+  )
 
 export const setDataEpic = () =>
-    action$.pipe(
-        filter((action) => action.type === connectFulfilled.type),
-        tap(() => {
-            const socket = getSocket()
-            socket.next({ type: setData.type, payload: undefined })
-        }),
-    )
+  action$.pipe(
+    select(connectFulfilled),
+    tap(({ payload: { connectionId } }) => {
+      const socket = getSocket()
+      socket.next({ type: setData.type, payload: { connectionId } })
+    }),
+  )
 
 export const disconnectEpic = () =>
-    action$.pipe(
-        filter((action) => action.type === resetConnection.type),
-        tap((action) => {
-            const socket = getSocket()
-            socket.next(action)
-        }),
-        ignoreElements()
-    )
-
+  action$.pipe(
+    select(resetConnection),
+    tap((action) => {
+      const socket = getSocket()
+      socket.next(action)
+    }),
+    ignoreElements(),
+  )
