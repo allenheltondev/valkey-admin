@@ -124,8 +124,13 @@ const parseInfo = (infoStr: string): Record<string, string> => infoStr
 async function sendValkeyRunCommand(client: GlideClient, ws: WebSocket, payload: { command: string, connectionId: string }) {
   try {
     const rawResponse = await client.customCommand(payload.command.split(" ")) as string
-    const response = parseInfo(rawResponse)
-    console.log("Raw response is: ", rawResponse)
+    console.log("========")
+    console.log(typeof rawResponse)
+    console.log(rawResponse)
+    console.log("========")
+
+    // todo fixme!!! they are not all strings!
+    const response = typeof rawResponse === "string" ? parseInfo(rawResponse) : rawResponse
     if (rawResponse.includes("ResponseError")) {
       ws.send(JSON.stringify({
         meta: {command: payload.command}, type: VALKEY.COMMAND.sendFailed, payload: rawResponse
