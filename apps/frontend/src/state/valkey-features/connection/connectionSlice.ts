@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { CONNECTED, VALKEY } from "@common/src/constants.ts"
+import { CONNECTED, LOCAL_STORAGE, VALKEY } from "@common/src/constants.ts"
+import * as R from "ramda"
 
 type ConnectionStatus = "Idle" | "Connecting" | "Connected" | "Error";
 
@@ -10,7 +11,7 @@ interface ConnectionDetails {
     password: string;
 }
 
-interface ConnectionState {
+export interface ConnectionState {
     status: ConnectionStatus;
     errorMessage: string | null;
     connectionDetails: ConnectionDetails;
@@ -20,10 +21,15 @@ interface ValkeyConnectionsState {
     [connectionId: string]: ConnectionState
 }
 
+const currentConnections = R.pipe(
+  (v: string) => localStorage.getItem(v),
+  (s) => (s === null ? {} : JSON.parse(s)),
+)(LOCAL_STORAGE.VALKEY_CONNECTIONS)
+
 const connectionSlice = createSlice({
     name: VALKEY.CONNECTION.name,
     initialState: {
-        connections: {} as ValkeyConnectionsState
+        connections: currentConnections as ValkeyConnectionsState
     },
     reducers: {
         connectPending: (

@@ -1,8 +1,9 @@
 import { createRoot } from "react-dom/client"
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router"
 import { Provider } from "react-redux"
+import { useEffect } from "react"
 import App from "./App.tsx"
-import { Connection } from "@/components/Connection.tsx"
+import { Connection } from "@/components/connection/Connection.tsx"
 import { Dashboard } from "./components/Dashboard.tsx"
 import { store } from "./store.ts"
 import history from "./history.ts"
@@ -13,9 +14,15 @@ import LearnMore from "./components/LearnMore.tsx"
 import "./css/index.css"
 
 const AppWithHistory = () => {
-  history.navigate = useNavigate()
-  history.location = useLocation()
-  history.params = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const params = useParams()
+
+  useEffect(() => {
+    history.location = location
+    history.navigate = navigate
+    history.params = params
+  }, [location, navigate, params])
 
   return (
     <Routes>

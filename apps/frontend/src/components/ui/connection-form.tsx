@@ -22,6 +22,7 @@ function ConnectionForm({ onClose }: ConnectionFormProps) {
     dispatch(
       connectPending({ host, port, username, password, connectionId })
     );
+    onClose()
   };
 
   return (

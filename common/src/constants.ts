@@ -40,3 +40,7 @@ export const VALKEY = {
 } as const
 
 export const CONNECTED = "Connected"
+
+export const LOCAL_STORAGE = {
+  VALKEY_CONNECTIONS: "VALKEY_CONNECTIONS",
+}

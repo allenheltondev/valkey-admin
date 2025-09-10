@@ -4,6 +4,7 @@ import { Card } from "./ui/card";
 import { AppHeader } from "./ui/app-header";
 import { LayoutDashboard } from "lucide-react";
 import { selectConnectionDetails } from "@/state/valkey-features/connection/connectionSelectors";
+import { useParams } from "react-router"
 
 export function Dashboard() {
   const {
@@ -14,7 +15,8 @@ export function Dashboard() {
     bytes_per_key,
     server_name,
   } = useSelector(selectData);
-  const connectionDetails = useSelector(selectConnectionDetails);
+  const { id } = useParams<{ id: string }>()
+  const connectionDetails = useSelector(selectConnectionDetails(id!));
   return (
     <div className="p-4">
       <AppHeader

@@ -1,9 +1,9 @@
-import type {NavigateFunction, Params} from "react-router"
+import type {NavigateFunction, Params, Location} from "react-router"
 
 const history = {
-  location: null as Location | null,
-  navigate: null as NavigateFunction | null,
-  params: null as Readonly<Params<string>> | null,
+  location: null as unknown as Location,
+  navigate: null as unknown as NavigateFunction,
+  params: null as unknown as Readonly<Params<string>>,
 }
 
 export default history

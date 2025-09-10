@@ -1,6 +1,8 @@
+import type { ReactNode } from "react"
+
 type AppHeaderProps = {
   title: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   servername: string;
   port: string;
 };

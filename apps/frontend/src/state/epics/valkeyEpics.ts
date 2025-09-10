@@ -1,12 +1,15 @@
 import type { Store } from "@reduxjs/toolkit"
 import { merge } from "rxjs"
-import { ignoreElements, tap } from "rxjs/operators"
+import { ignoreElements, tap, delay } from "rxjs/operators"
+import * as R from "ramda"
 import { getSocket } from "./wsEpics"
 import { connectFulfilled, connectPending, resetConnection } from "../valkey-features/connection/connectionSlice"
 import { sendRequested } from "../valkey-features/command/commandSlice"
 import { setData } from "../valkey-features/info/infoSlice"
 import { action$, select } from "../middleware/rxjsMiddleware/rxjsMiddlware"
 import history from "@/history.ts"
+import { atId } from "@/state/valkey-features/connection/connectionSelectors.ts"
+import { LOCAL_STORAGE } from "@common/src/constants.ts"
 
 export const connectionEpic = (store: Store) =>
   merge(
@@ -22,9 +25,27 @@ export const connectionEpic = (store: Store) =>
 
     action$.pipe(
       select(connectFulfilled),
+      tap(({ payload: { connectionId } }) => {
+        try {
+          const currentConnections = R.pipe(
+            (v: string) => localStorage.getItem(v),
+            (s) => (s === null ? {} : JSON.parse(s)),
+          )(LOCAL_STORAGE.VALKEY_CONNECTIONS)
+
+          R.pipe( // merge fulfilled connection with existing connections in localStorage
+            atId(connectionId),
+            R.evolve({ status: R.always("Disconnected") }),
+            R.assoc(connectionId, R.__, currentConnections),
+            JSON.stringify,
+            (updated) => localStorage.setItem(LOCAL_STORAGE.VALKEY_CONNECTIONS, updated)
+          )(store.getState())
+        } catch (e) {
+          alert("JSON.parse must've failed. See dev console.")
+          console.error(e)
+        }
+      }),
+      delay(1000), // todo maybe dispatch an event to show a success animation/message?
       tap(action => {
-        console.log("here")
-        console.log(history)
         history.navigate(`/${action.payload.connectionId}/dashboard`)
       }),
     ),
