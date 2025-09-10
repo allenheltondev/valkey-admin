@@ -69,7 +69,7 @@ export function AppSidebar() {
               <li key={to}>
                 <Link
                   to={to}
-                  className={`flex p-2 text-nowrap dark:text-white ${getNavItemClasses(to)} h-10`}
+                  className={`flex p-2 text-nowrap dark:text-white ${getNavItemClasses(to)} h-10 ${isExpanded && "w-42"}`}
                   title={title}
                 >
                   <Icon size={22} />
@@ -115,7 +115,7 @@ export function AppSidebar() {
               ) : (
                 <Link
                   to={item.to || ""}
-                  className={`flex p-2 items-center dark:text-white ${getNavItemClasses(item.to || "")} h-10`}
+                  className={`flex p-2 items-center dark:text-white ${getNavItemClasses(item.to || "")} h-10 ${isExpanded && "w-42"}`}
                   title={item.title}
                 >
                   <item.icon size={22} />
