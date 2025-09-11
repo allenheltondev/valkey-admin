@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, LayoutDashboard } from "lucide-react"
 import React, { useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { formatTimestamp } from "@common/src/time-utils.ts"
@@ -9,6 +9,7 @@ import { Textarea } from "./ui/textarea"
 import { Button } from "./ui/button"
 import RouteContainer from "@/components/ui/route-container.tsx"
 import { useParams } from "react-router"
+import { AppHeader } from "@/components/ui/app-header.tsx"
 
 export function SendCommand() {
   const dispatch = useAppDispatch()
@@ -38,15 +39,21 @@ export function SendCommand() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  return (<RouteContainer title="Send Command">
+  return (
+    <RouteContainer title="Send Command">
+      <AppHeader
+        className="mb-0"
+        title="Send Command"
+        icon={<LayoutDashboard size={20} />}
+      />
       <div className="flex-1 overflow-auto w-full flex flex-row gap-4">
-                <pre
-                  className="rounded-md flex-1 bg-muted p-4 whitespace-pre-wrap break-words overflow-x-auto relative">
-                    <h3 className="text-muted-foreground sticky top-0 text-right">Response</h3>
-                    <code className={`text-sm font-mono ${error ? "text-destructive" : "text-muted-foreground"}`}>
-                        {JSON.stringify(error ?? response, null, 4)}
-                    </code>
-                </pre>
+        <pre
+          className="rounded-md flex-1 bg-muted p-4 whitespace-pre-wrap break-words overflow-x-auto relative">
+            <h3 className="text-muted-foreground sticky top-0 text-right">Response</h3>
+            <code className={`text-sm font-mono ${error ? "text-destructive" : "text-muted-foreground"}`}>
+                {JSON.stringify(error ?? response, null, 4)}
+            </code>
+        </pre>
 
         <div
           className="flex flex-col whitespace-pre-wrap break-words bg-muted rounded-md p-4 font-mono gap-2 w-60 relative">
