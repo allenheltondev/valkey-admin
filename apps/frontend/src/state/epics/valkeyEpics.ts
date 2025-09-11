@@ -69,13 +69,3 @@ export const setDataEpic = () =>
       socket.next({ type: setData.type, payload: { connectionId } })
     }),
   )
-
-// export const disconnectEpic = () =>
-//   action$.pipe(
-//     select(resetConnection),
-//     tap((action) => {
-//       const socket = getSocket()
-//       socket.next(action)
-//     }),
-//     ignoreElements(),
-//   )

@@ -9,7 +9,6 @@ export const registerEpics = (store: Store) => {
         connectionEpic(store),
         sendRequestEpic(),
         setDataEpic(),
-        // disconnectEpic()
     ).subscribe({
         error: err => console.error('Epic error:', err),
     })
