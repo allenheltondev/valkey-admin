@@ -3,15 +3,18 @@ import { selectData } from "@/state/valkey-features/info/infoSelectors.ts";
 import { Card } from "./ui/card";
 import { AppHeader } from "./ui/app-header";
 import { LayoutDashboard } from "lucide-react";
+import { useParams } from "react-router";
 
 export function Dashboard() {
+  const { id } = useParams()
   const {
     total_commands_processed,
     dataset_bytes,
     connected_clients,
     keys_count,
     bytes_per_key,
-  } = useSelector(selectData);
+  } = useSelector(selectData(id!));
+
   return (
     <div className="p-4">
       <AppHeader
