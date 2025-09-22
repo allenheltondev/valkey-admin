@@ -1,5 +1,4 @@
 export function convertTTL(ttl: number) {
-    // TTL values specific to Valkey
     if (ttl === -1) return 'Infinity'; 
     if (ttl === -2) return 'None'; 
     if (ttl <= 0) return 'None'; 

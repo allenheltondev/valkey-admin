@@ -19,7 +19,7 @@ export const keyBrowserEpic = () =>
       }),
     ),
     
-    // for getting a key type (getKeyType)
+    // for getting a key type and ttl (getKeyInfo)
     action$.pipe(
       select(getKeyTypeRequested),
       tap((action) => {
