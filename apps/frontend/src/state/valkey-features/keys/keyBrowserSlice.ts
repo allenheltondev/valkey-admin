@@ -12,6 +12,7 @@ interface KeyBrowserState {
     cursor: string
     loading: boolean
     error: string | null
+    keyTypeLoading: { [key: string]: boolean }
   }
 }
 
@@ -19,7 +20,8 @@ export const defaultConnectionState = {
   keys: [],
   cursor: "0",
   loading: false,
-  error: null
+  error: null,
+  keyTypeLoading: {}
 }
 
 const initialState: KeyBrowserState = {}
@@ -58,6 +60,39 @@ const keyBrowserSlice = createSlice({
         state[connectionId].error = error
       }
     },
+    getKeyTypeRequested: (state, action: PayloadAction<{ connectionId: string; key: string }>) => {
+      const { connectionId, key } = action.payload
+      if (!state[connectionId]) {
+        state[connectionId] = { ...defaultConnectionState }
+      }
+      state[connectionId].keyTypeLoading[key] = true
+    },
+    getKeyTypeFulfilled: (state, action: PayloadAction<{ 
+      connectionId: string
+      key: string
+      keyType: string 
+      ttl: number
+    }>) => {
+      const { connectionId, key, keyType, ttl } = action.payload
+      if (state[connectionId]) {
+        const existingKey = state[connectionId].keys.find(k => k.key === key)
+        if (existingKey) {
+          existingKey.type = keyType
+          existingKey.ttl = ttl
+        }
+        delete state[connectionId].keyTypeLoading[key]
+      }
+    },
+    getKeyTypeFailed: (state, action: PayloadAction<{ 
+      connectionId: string
+      key: string
+      error: string 
+    }>) => {
+      const { connectionId, key } = action.payload
+      if (state[connectionId]) {
+        delete state[connectionId].keyTypeLoading[key]
+      }
+    },
   }
 })
 
@@ -66,4 +101,7 @@ export const {
   getKeysRequested, 
   getKeysFulfilled, 
   getKeysFailed,
+  getKeyTypeRequested,
+  getKeyTypeFulfilled,
+  getKeyTypeFailed,
 } = keyBrowserSlice.actions
