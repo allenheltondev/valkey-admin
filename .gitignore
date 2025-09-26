@@ -38,3 +38,5 @@ Thumbs.db
 out/
 app/
 packages/
+
+tools/valkey-metrics/data/
