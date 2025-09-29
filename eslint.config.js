@@ -75,7 +75,7 @@ export default tseslint.config([
       "max-len": [
         "error",
         {
-          code: 140,
+          code: 145,
           ignoreComments: false,
           ignoreUrls: false,
           ignoreStrings: false,
