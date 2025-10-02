@@ -47,6 +47,9 @@ export const VALKEY = {
     deleteKeyRequested: "deleteKeyRequested",
     deleteKeyFulfilled: "deleteKeyFulfilled",
     deleteKeyFailed: "deleteKeyFailed",
+    addKeyRequested: "addKeyRequested",
+    addKeyFulfilled: "addKeyFulfilled",
+    addKeyFailed: "addKeyFailed",
   } as const),
 } as const
 

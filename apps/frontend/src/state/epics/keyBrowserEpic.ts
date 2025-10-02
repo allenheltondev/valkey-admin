@@ -4,7 +4,8 @@ import { getSocket } from "./wsEpics"
 import {
   getKeysRequested,
   getKeyTypeRequested,
-  deleteKeyRequested
+  deleteKeyRequested,
+  addKeyRequested
 } from "../valkey-features/keys/keyBrowserSlice"
 import { action$, select } from "../middleware/rxjsMiddleware/rxjsMiddlware"
 
@@ -36,6 +37,16 @@ export const keyBrowserEpic = () =>
       tap((action) => {
         const socket = getSocket()
         console.log("Sending deleteKey request to server...")
+        socket.next(action)
+      })
+    ),
+
+    // add new key (addKey)
+    action$.pipe(
+      select(addKeyRequested),
+      tap((action) => {
+        const socket = getSocket()
+        console.log("Sending addKey request to server...")
         socket.next(action)
       })
     )

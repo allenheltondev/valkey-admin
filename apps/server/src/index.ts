@@ -1,7 +1,12 @@
 import { WebSocket, WebSocketServer } from "ws"
 import { Decoder, GlideClient } from "@valkey/valkey-glide"
 import { VALKEY } from "../../../common/src/constants.ts"
-import { getKeys, getKeyInfoSingle, deleteKey } from "./keys-browser.ts"
+import {
+  getKeys,
+  getKeyInfoSingle,
+  deleteKey,
+  addKey
+} from "./keys-browser.ts"
 
 const wss = new WebSocketServer({ port: 8080 })
 
@@ -96,6 +101,24 @@ wss.on("connection", (ws: WebSocket) => {
         ws.send(
           JSON.stringify({
             type: VALKEY.KEYS.deleteKeyFailed,
+            payload: {
+              connectionId,
+              key: action.payload?.key,
+              error: "Invalid connection Id",
+            },
+          })
+        )
+      }
+    } else if (action.type === VALKEY.KEYS.addKeyRequested) {
+      console.log("Handling addKeyRequested for key:", action.payload?.key)
+      const client = clients.get(connectionId)
+      if (client) {
+        await addKey(client, ws, action.payload)
+      } else {
+        console.log("No client found for connectionId:", connectionId)
+        ws.send(
+          JSON.stringify({
+            type: VALKEY.KEYS.addKeyFailed,
             payload: {
               connectionId,
               key: action.payload?.key,

@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { CustomTooltip } from "./ui/custom-tooltip"
 import { AppHeader } from "./ui/app-header"
+import AddNewKey from "./ui/add-key"
 import { Button } from "./ui/button"
 import DeleteModal from "./ui/delete-modal"
 import { useAppDispatch } from "@/hooks/hooks"
@@ -50,9 +51,14 @@ export function KeyBrowser() {
   const dispatch = useAppDispatch()
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isAddKeyOpen, setIsAddKeyOpen] = useState(false)
 
   const handleDeleteModal = () => {
     setIsDeleteModalOpen(!isDeleteModalOpen)
+  }
+
+  const handleAddKeyModal = () => {
+    setIsAddKeyOpen(!isAddKeyOpen)
   }
 
   const keys: KeyInfo[] = useSelector(selectKeys(id!))
@@ -121,18 +127,27 @@ export function KeyBrowser() {
       </div>
 
       {/* Search and Refresh */}
-      <div className="flex items-center w-full mb-4">
+      <div className="flex items-center w-full mb-4 text-sm font-light">
         <input
-          className="w-full h-10 p-2 dark:border-tw-dark-border border rounded"
+          className="flex-1 h-10 p-2 dark:border-tw-dark-border border rounded"
           placeholder="search"
         />
         <button
-          className="ml-2 px-4 py-2 bg-tw-primary text-white rounded"
+          className="h-10 ml-2 px-4 py-2 bg-tw-primary text-white rounded "
+          onClick={handleAddKeyModal}
+        >
+          + Add Key
+        </button>
+        <button
+          className="h-10 ml-2 px-4 py-2 bg-tw-primary text-white rounded"
           onClick={handleRefresh}
         >
           <RefreshCcw />
         </button>
       </div>
+
+      {/* Add Key Modal */}
+      {isAddKeyOpen && <AddNewKey onClose={handleAddKeyModal} />}
 
       {/* Key Viewer */}
       <TooltipProvider>
@@ -164,8 +179,10 @@ export function KeyBrowser() {
                       <div className="flex items-center gap-1 text-xs">
                         {keyInfo.size && (
                           <CustomTooltip content="Size">
-                            <span className="flex items-center justify-between gap-1 text-xs px-2 py-1 
-                            rounded-full border-2 border-tw-primary text-tw-primary dark:text-white">
+                            <span
+                              className="flex items-center justify-between gap-1 text-xs px-2 py-1 
+                            rounded-full border-2 border-tw-primary text-tw-primary dark:text-white"
+                            >
                               <Database
                                 className="text-white bg-tw-primary p-1 rounded-full"
                                 size={20}
@@ -176,8 +193,10 @@ export function KeyBrowser() {
                         )}
                         {/* text-red-400 is a placehodler for now, will change to a custom tw color */}
                         <CustomTooltip content="TTL">
-                          <span className="flex items-center justify-between gap-1 text-xs px-2 py-1 
-                          rounded-full border-2 border-tw-primary text-tw-primary dark:text-white">
+                          <span
+                            className="flex items-center justify-between gap-1 text-xs px-2 py-1 
+                          rounded-full border-2 border-tw-primary text-tw-primary dark:text-white"
+                          >
                             <Hourglass
                               className="text-white bg-tw-primary p-1 rounded-full"
                               size={20}
@@ -253,31 +272,39 @@ export function KeyBrowser() {
                           <th className="w-1/2 py-3 px-4 text-left font-semibold">
                             {selectedKeyInfo.type === "list"
                               ? "Index"
-                              : "Field"}
+                              : selectedKeyInfo.type === "string" ? "Value" : "Key"}
                           </th>
                           <th className="w-1/2 py-3 px-4 text-left font-semibold">
                             {selectedKeyInfo.type === "list"
-                              ? "Elements"
-                              : "Value"}
+                              ? "Elements" : selectedKeyInfo.type === "string" ? ""
+                                : "Value"}
                           </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedKeyInfo.elements.map(
-                          (element: ElementInfo, index: number) => (
-                            <tr key={index}>
-                              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
-                                {selectedKeyInfo.type === "list"
-                                  ? index
-                                  : element.key}
-                              </td>
-                              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
-                                {selectedKeyInfo.type === "list"
-                                  ? String(element)
-                                  : element.value}
-                              </td>
-                            </tr>
+                        {selectedKeyInfo.type !== "string" ? (
+                          selectedKeyInfo.elements.map(
+                            (element: ElementInfo, index: number) => (
+                              <tr key={index}>
+                                <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
+                                  {selectedKeyInfo.type === "list"
+                                    ? index
+                                    : element.key}
+                                </td>
+                                <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
+                                  {selectedKeyInfo.type === "list"
+                                    ? String(element)
+                                    : element.value}
+                                </td>
+                              </tr>
+                            )
                           )
+                        ) : (
+                          <tr>
+                            <td className="py-3 px-4 font-light dark:text-white">
+                              {selectedKeyInfo.elements}
+                            </td>
+                          </tr>
                         )}
                       </tbody>
                     </table>
