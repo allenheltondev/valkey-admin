@@ -196,7 +196,7 @@ async function discoverCluster(client: GlideClient) {
     const clusterNodes = response.reduce((acc, slotRange) => {
       const [, , masterNode, ...replicaNodes] = slotRange
 
-      const [masterHost, masterPort, masterId, _] = masterNode
+      const [masterHost, masterPort, masterId] = masterNode
 
       if (!acc[masterId]) {
         acc[masterId] = {
