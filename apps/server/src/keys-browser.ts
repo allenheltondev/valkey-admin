@@ -357,3 +357,96 @@ export async function addKey(
     console.log("Error adding key to Valkey", err)
   }
 }
+
+// functions for updatin/editing different key types
+async function updateStringKey(
+  client: GlideClient,
+  key: string,
+  value: string,
+  ttl?: number
+) {
+  if (ttl && ttl > 0) {
+    await client.customCommand(["SETEX", key, ttl.toString(), value])
+  } else {
+    await client.customCommand(["SET", key, value])
+  }
+}
+
+async function updateHashKey(
+  client: GlideClient,
+  key: string,
+  fields: { field: string; value: string }[],
+  ttl?: number
+) {
+  const hsetCommand = ["HSET", key]
+  fields.forEach(({ field, value }) => {
+    hsetCommand.push(field, value)
+  })
+
+  await client.customCommand(hsetCommand)
+
+  if (ttl && ttl > 0) {
+    await client.customCommand(["EXPIRE", key, ttl.toString()])
+  }
+}
+
+export async function updateKey(
+  client: GlideClient,
+  ws: WebSocket,
+  payload: {
+    connectionId: string;
+    key: string;
+    keyType: string;
+    value?: string; // for string type
+    fields?: { field: string; value: string }[]; // for hash type
+    ttl?: number;
+  }
+) {
+
+  try {
+    const keyType = payload.keyType.toLowerCase().trim()
+
+    switch (keyType) {
+      case "string":
+        if (!payload.value) {
+          throw new Error("Value is required for string type")
+        }
+        await updateStringKey(client, payload.key, payload.value, payload.ttl)
+        break
+      case "hash":
+        if (payload.fields && payload.fields.length > 0) {
+          await updateHashKey(client, payload.key, payload.fields, payload.ttl)
+          break
+        } else {
+          throw new Error("Fields are required for hash type")
+        }
+
+      default:
+        throw new Error(`Unsupported key type for update: ${payload.keyType}`)
+    }
+
+    const keyInfo = await getKeyInfo(client, payload.key)
+
+    ws.send(
+      JSON.stringify({
+        type: VALKEY.KEYS.updateKeyFulfilled,
+        payload: {
+          connectionId: payload.connectionId,
+          key: keyInfo,
+          message: "Key updated successfully",
+        },
+      })
+    )
+  } catch (err) {
+    ws.send(
+      JSON.stringify({
+        type: VALKEY.KEYS.updateKeyFailed,
+        payload: {
+          connectionId: payload.connectionId,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      })
+    )
+    console.log("Error updating key in Valkey", err)
+  }
+}

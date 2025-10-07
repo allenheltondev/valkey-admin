@@ -12,7 +12,10 @@ import {
   Key,
   Hourglass,
   Database,
-  Trash
+  Trash,
+  Pencil,
+  X,
+  Check
 } from "lucide-react"
 import { CustomTooltip } from "./ui/custom-tooltip"
 import { AppHeader } from "./ui/app-header"
@@ -28,7 +31,8 @@ import {
 import {
   getKeysRequested,
   getKeyTypeRequested,
-  deleteKeyRequested
+  deleteKeyRequested,
+  updateKeyRequested
 } from "@/state/valkey-features/keys/keyBrowserSlice"
 
 interface KeyInfo {
@@ -52,6 +56,9 @@ export function KeyBrowser() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isAddKeyOpen, setIsAddKeyOpen] = useState(false)
+  const [isEditable, setIsEditable] = useState(false)
+  const [editedValue, setEditedValue] = useState("")
+  const [editedHashValue, setEditedHashValue] = useState<{ [key: string]: string }>({})
 
   const handleDeleteModal = () => {
     setIsDeleteModalOpen(!isDeleteModalOpen)
@@ -73,6 +80,59 @@ export function KeyBrowser() {
 
   const handleRefresh = () => {
     dispatch(getKeysRequested({ connectionId: id! }))
+  }
+
+  const handleEdit = () => {
+    if (isEditable) {
+      // Cancel edit - reset to original value
+      setIsEditable(false)
+      setEditedValue("")
+    } else {
+      // Start editing - initialize with current value
+      if (selectedKeyInfo?.type === "string") {
+        setEditedValue(selectedKeyInfo.elements)
+      } else if (selectedKeyInfo?.type === "hash") {
+        const initialHashValue: { [key: string]: string } = {}
+        selectedKeyInfo.elements.forEach((element: ElementInfo) => {
+          initialHashValue[element.key] = element.value
+        })
+        setEditedHashValue(initialHashValue)
+      }
+      setIsEditable(true)
+    }
+  }
+
+  const handleSave = () => {
+    if (selectedKey && id && selectedKeyInfo) {
+      if (selectedKeyInfo.type === "string") {
+        dispatch(updateKeyRequested({
+          connectionId: id,
+          key: selectedKey,
+          keyType: "string",
+          value: editedValue,
+        }))
+      } else if (selectedKeyInfo.type === "hash") {
+        dispatch(updateKeyRequested({
+          connectionId: id,
+          key: selectedKey,
+          keyType: "hash",
+          fields: Object.entries(editedHashValue).map(([field, value]) => ({
+            field,
+            value
+          })),
+        }))
+      }
+      setIsEditable(false)
+      setEditedValue("")
+      setEditedHashValue({})
+    }
+  }
+
+  const handleHashFieldChange = (fieldKey: string, newValue: string) => {
+    setEditedHashValue(prev => ({
+      ...prev,
+      [fieldKey]: newValue
+    }))
   }
 
   const handleKeyClick = (keyName: string) => {
@@ -267,7 +327,7 @@ export function KeyBrowser() {
                   {/* TO DO: Refactor KeyBrowser and build smaller components */}
                   {/* Key Elements */}
                   <div className="flex items-center justify-center w-full p-4">
-                    <table className="table-fixed w-full overflow-hidden">
+                    <table className="table-auto w-full overflow-hidden">
                       <thead className="bg-tw-dark-border opacity-85 text-white">
                         <tr>
                           <th className="w-1/2 py-3 px-4 text-left font-semibold">
@@ -280,10 +340,61 @@ export function KeyBrowser() {
                               ? "Elements" : selectedKeyInfo.type === "string" ? ""
                                 : "Value"}
                           </th>
+                          <th className="">
+                            {isEditable && (selectedKeyInfo.type === "string" || selectedKeyInfo.type === "hash") ? (
+                              <div className="flex gap-1">
+                                <CustomTooltip content="Save">
+                                  <Button
+                                    onClick={handleSave}
+                                    variant={"secondary"}
+                                    className="text-tw-primary hover:text-tw-primary"
+                                  >
+                                    <Check />
+                                  </Button>
+                                </CustomTooltip>
+                                <CustomTooltip content="Cancel">
+                                  <Button
+                                    onClick={handleEdit}
+                                    variant={"destructiveGhost"}
+                                  >
+                                    <X />
+                                  </Button>
+                                </CustomTooltip>
+                              </div>
+                            ) : (
+                              <CustomTooltip content="Edit">
+                                <Button
+                                  className="mr-1"
+                                  onClick={handleEdit}
+                                  variant={"ghost"}
+                                  disabled={selectedKeyInfo.type !== "string" && selectedKeyInfo.type !== "hash"}
+                                >
+                                  <Pencil />
+                                </Button>
+                              </CustomTooltip>
+                            )}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedKeyInfo.type !== "string" ? (
+                        {selectedKeyInfo.type === "string" ? (
+                          <tr>
+                            <td className="py-3 px-4 font-light dark:text-white" colSpan={2}>
+                              {isEditable ? (
+                                <textarea
+                                  className="w-full p-2 dark:bg-tw-dark-bg dark:border-tw-dark-border border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                                  value={editedValue}
+                                  onChange={(e) => setEditedValue(e.target.value)}
+                                  autoFocus
+                                />
+                              ) : (
+                                <div className="whitespace-pre-wrap break-words">
+                                  {selectedKeyInfo.elements}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ) : (
                           selectedKeyInfo.elements.map(
                             (element: ElementInfo, index: number) => (
                               <tr key={index}>
@@ -293,19 +404,22 @@ export function KeyBrowser() {
                                     : element.key}
                                 </td>
                                 <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
-                                  {selectedKeyInfo.type === "list" || selectedKeyInfo.type === "set"
-                                    ? String(element)
-                                    : element.value}
+                                  {isEditable && selectedKeyInfo.type === "hash" ? (
+                                    <input
+                                      type="text"
+                                      className="w-full p-2 dark:bg-tw-dark-bg dark:border-tw-dark-border border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      value={editedHashValue[element.key] || ""}
+                                      onChange={(e) => handleHashFieldChange(element.key, e.target.value)}
+                                    />
+                                  ) : (
+                                    selectedKeyInfo.type === "list" || selectedKeyInfo.type === "set"
+                                      ? String(element)
+                                      : element.value
+                                  )}
                                 </td>
                               </tr>
                             )
                           )
-                        ) : (
-                          <tr>
-                            <td className="py-3 px-4 font-light dark:text-white">
-                              {selectedKeyInfo.elements}
-                            </td>
-                          </tr>
                         )}
                       </tbody>
                     </table>
@@ -318,6 +432,7 @@ export function KeyBrowser() {
               )}
             </div>
           </div>
+          {/* Key Details End */}
         </div>
       </TooltipProvider>
     </div>

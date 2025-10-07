@@ -5,7 +5,8 @@ import {
   getKeysRequested,
   getKeyTypeRequested,
   deleteKeyRequested,
-  addKeyRequested
+  addKeyRequested,
+  updateKeyRequested,
 } from "../valkey-features/keys/keyBrowserSlice"
 import { action$, select } from "../middleware/rxjsMiddleware/rxjsMiddlware"
 
@@ -49,5 +50,15 @@ export const keyBrowserEpic = () =>
         console.log("Sending addKey request to server...")
         socket.next(action)
       })
-    )
+    ),
+
+    // update existing key (updateKey)
+    action$.pipe(
+      select(updateKeyRequested),
+      tap((action) => {
+        const socket = getSocket()
+        console.log("Sending updateKey request to server...")
+        socket.next(action)
+      })
+    ),
   )
