@@ -214,6 +214,57 @@ const keyBrowserSlice = createSlice({
         state[connectionId].error = error
       }
     },
+    updateKeyRequested: (
+      state,
+      action: PayloadAction<{
+        connectionId: string;
+        key: string;
+        keyType: string;
+        value?: string;
+        fields?: { field: string; value: string }[];
+        ttl?: number;
+      }>
+    ) => {
+      const { connectionId } = action.payload
+      if (!state[connectionId]) {
+        state[connectionId] = { ...defaultConnectionState }
+      }
+      state[connectionId].loading = true
+      state[connectionId].error = null
+    },
+    updateKeyFulfilled: (
+      state,
+      action: PayloadAction<{
+        connectionId: string;
+        key: KeyInfo;
+        message: string;
+      }>
+    ) => {
+      const { connectionId, key } = action.payload
+      if (state[connectionId]) {
+        state[connectionId].loading = false
+        const index = state[connectionId].keys.findIndex(
+          (k) => k.name === key.name
+        )
+        if (index !== -1) {
+          state[connectionId].keys[index] = key
+        }
+      }
+    },
+    updateKeyFailed: (
+      state,
+      action: PayloadAction<{
+        connectionId: string;
+        error: string;
+      }>
+    ) => {
+      const { connectionId, error } = action.payload
+      if (state[connectionId]) {
+        state[connectionId].loading = false
+        state[connectionId].error = error
+      }
+    },
+
   },
 })
 
@@ -231,4 +282,7 @@ export const {
   addKeyRequested,
   addKeyFulfilled,
   addKeyFailed,
+  updateKeyRequested,
+  updateKeyFulfilled,
+  updateKeyFailed,
 } = keyBrowserSlice.actions
