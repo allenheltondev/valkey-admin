@@ -1,5 +1,5 @@
 import { WebSocket } from "ws"
-import { GlideClient } from "@valkey/valkey-glide"
+import { GlideClient, Batch } from "@valkey/valkey-glide"
 import * as R from "ramda"
 import { VALKEY } from "../../../common/src/constants.ts"
 
@@ -397,14 +397,17 @@ async function updateListKey(
   updates: { index: number; value: string }[],
   ttl?: number
 ) {
-  // Update each specified index
-  for (const { index, value } of updates) {
-    await client.customCommand(["LSET", key, index.toString(), value])
-  }
+  const batch = new Batch(true)
+
+  updates.map(({ index, value }) =>
+    batch.customCommand(["LSET", key, index.toString(), value])
+  )
 
   if (ttl && ttl > 0) {
-    await client.customCommand(["EXPIRE", key, ttl.toString()])
+    batch.customCommand(["EXPIRE", key, ttl.toString()])
   }
+
+  await client.exec(batch, true)
 }
 
 async function updateSetKey(
@@ -413,15 +416,18 @@ async function updateSetKey(
   updates: { oldValue: string; newValue: string }[],
   ttl?: number
 ) {
-  // For each update, remove old value and add new value
+  const batch = new Batch(true)
+
   for (const { oldValue, newValue } of updates) {
-    await client.customCommand(["SREM", key, oldValue])
-    await client.customCommand(["SADD", key, newValue])
+    batch.customCommand(["SREM", key, oldValue])
+    batch.customCommand(["SADD", key, newValue])
   }
 
   if (ttl && ttl > 0) {
-    await client.customCommand(["EXPIRE", key, ttl.toString()])
+    batch.customCommand(["EXPIRE", key, ttl.toString()])
   }
+
+  await client.exec(batch, true)
 }
 
 export async function updateKey(
