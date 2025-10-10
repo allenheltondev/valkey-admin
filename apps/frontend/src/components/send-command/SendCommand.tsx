@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils.ts"
 import { Timestamp } from "@/components/ui/timestamp.tsx"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx"
 import DiffCommands from "@/components/send-command/DiffCommands.tsx"
+import Response from "@/components/send-command/Response.tsx"
+import type { JSONObject } from "@common/src/json-utils.ts"
 
 export function SendCommand() {
   const dispatch = useAppDispatch()
@@ -18,9 +20,11 @@ export function SendCommand() {
   const [text, setText] = useState("")
   const [commandIndex, setCommandIndex] = useState<number>(0)
   const [compareWith, setCompareWith] = useState(null)
+  const [keysFilter, setKeysFilter] = useState("")
+  const [historyFilter, setHistoryFilter] = useState("")
 
   const { id } = useParams()
-  const allCommands = useSelector(selectAllCommands(id as string))
+  const allCommands = useSelector(selectAllCommands(id as string)) || []
   const { error, response } = useSelector(getNth(commandIndex, id as string)) as CommandMetadata
 
   const onSubmit = (command?: string) => {
@@ -39,7 +43,7 @@ export function SendCommand() {
     }
   }
 
-  const canDiff = (index) => {
+  const canDiff = (index) => { // can diff only the same command, i.e. info vs info
     const currentCommand = allCommands[commandIndex]
     const targetCommand = allCommands[index]
     return currentCommand.command.toLowerCase() === targetCommand.command.toLowerCase()
@@ -55,89 +59,116 @@ export function SendCommand() {
         title="Send Command"
       />
       <div className="flex-1 overflow-auto w-full flex flex-row gap-4">
-        <pre
-          className="rounded flex-1 bg-muted p-2 whitespace-pre-wrap break-words overflow-x-auto relative border dark:border-tw-dark-border">
-          <h3 className="text-muted-foreground sticky top-0 text-right">Response</h3>
-          <code className={`text-sm font-mono ${error ? "text-destructive" : "text-muted-foreground"}`}>
-            {
-              compareWith ?
-                <DiffCommands
-                  id={id}
-                  indexA={commandIndex}
-                  indexB={compareWith}
-                /> :
-                JSON.stringify(error ?? response, null, 4)
-            }
-          </code>
-        </pre>
-        <div
-          className="flex flex-col whitespace-pre-wrap break-words bg-muted rounded p-2 font-mono gap-1 w-80 relative border
-          dark:border-tw-dark-border">
+
+        {/* response | diff */}
+        <div className="flex flex-col flex-1">
+          <h3 className="text-muted-foreground sticky top-0 text-right">{compareWith ? "Diff" : "Response"}</h3>
+          <input
+            className="mb-2 px-2 py-1 text-primary text-sm dark:border-tw-dark-border border rounded"
+            onChange={({ target: { value } }) => setKeysFilter(value)}
+            placeholder="Search keys"
+            value={keysFilter}
+          />
+          <pre className="flex-1 rounded bg-muted p-2 pr-4 overflow-y-auto whitespace-pre-wrap break-words border dark:border-tw-dark-border relative">
+            <code className={`text-sm font-mono overflow-y-auto relative ${error ? "text-destructive" : "text-primary"}`}>
+              {
+                compareWith === null ?
+                  <Response
+                    response={response || error as JSONObject}
+                    filter={keysFilter}
+                  /> :
+                  <DiffCommands
+                    filter={keysFilter}
+                    id={id}
+                    indexA={commandIndex}
+                    indexB={compareWith}
+                  />
+              }
+            </code>
+          </pre>
+        </div>
+
+        {/* commands history */}
+        <div className="flex flex-col">
           <h3 className="text-muted-foreground sticky top-0">History</h3>
-          {
-            allCommands?.map(({ command, timestamp }, i) =>
-              <div
-                className={cn(
-                  "flex flex-row text-sm items-center py-1 px-2 rounded",
-                  (i === commandIndex) && "bg-tw-primary text-white",
-                  (i === compareWith) && "bg-tw-primary-light",
-                )}
-                key={timestamp}
-              >
-                <Timestamp timestamp={timestamp} className="opacity-70" />
-                <Tooltip delayDuration={2000}>
-                  <TooltipTrigger className="flex-1">
-                    <div
-                      className="truncate text-left cursor-pointer"
-                      onClick={() => {
-                        setText("")
-                        setCompareWith(null)
-                        setCommandIndex(i)
-                      }}
-                    >
-                      {command}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="left">
-                    See response
-                  </TooltipContent>
-                </Tooltip>
-                <div className="flex flex-row justify-self-end">
-                  {
-                    i !== commandIndex && i !== compareWith && canDiff(i) &&
-                    <Tooltip delayDuration={1000}>
-                      <TooltipTrigger>
-                        <GitCompareIcon
-                          className={cn("size-4 ml-2 cursor-pointer hover:text-tw-primary")}
+          <input
+            className="mb-2 px-2 py-1 text-primary text-sm dark:border-tw-dark-border border rounded"
+            onChange={({ target: { value } }) => setHistoryFilter(value)}
+            placeholder="Search command"
+            value={historyFilter}
+          />
+          <div
+            className="flex-1 whitespace-pre-wrap break-words bg-muted rounded p-2 font-mono gap-1 w-80 relative border
+            dark:border-tw-dark-border">
+            {
+              allCommands
+                .map((c, i) => ({ ...c, i })) // moving index inside objects because filter will ruin the sequence
+                .filter(({ command }) => command.includes(historyFilter))
+                .map(({ command, timestamp, i }) =>
+                  <div
+                    className={cn(
+                      "flex flex-row text-sm items-center py-1 px-2 rounded",
+                      (i === commandIndex) && "bg-tw-primary text-white",
+                      (i === compareWith) && "bg-tw-primary-light",
+                    )}
+                    key={timestamp}
+                  >
+                    <Timestamp timestamp={timestamp} className="opacity-70" />
+                    <Tooltip delayDuration={2000}>
+                      <TooltipTrigger className="flex-1">
+                        <div
+                          className="truncate text-left cursor-pointer"
                           onClick={() => {
-                            setCompareWith(i)
+                            setText("")
+                            setCompareWith(null)
+                            setCommandIndex(i)
                           }}
-                        />
+                        >
+                          {command}
+                        </div>
                       </TooltipTrigger>
-                      <TooltipContent>
-                        Compare with this run
+                      <TooltipContent side="left">
+                        See response
                       </TooltipContent>
                     </Tooltip>
-                  }
-                  {
-                    compareWith === null &&
-                    <Tooltip delayDuration={1000}>
-                      <TooltipTrigger>
-                        <RotateCwIcon
-                          className={cn("size-4 ml-2 cursor-pointer hover:text-tw-primary")}
-                          onClick={() => onSubmit(command)}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Run again
-                      </TooltipContent>
-                    </Tooltip>
-                  }
-                </div>
-              </div>)
-          }
+                    <div className="flex flex-row justify-self-end">
+                      {
+                        i !== commandIndex && i !== compareWith && canDiff(i) &&
+                        <Tooltip delayDuration={1000}>
+                          <TooltipTrigger>
+                            <GitCompareIcon
+                              className={cn("size-4 ml-2 cursor-pointer")}
+                              onClick={() => {
+                                setCompareWith(i)
+                              }}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Compare with this run
+                          </TooltipContent>
+                        </Tooltip>
+                      }
+                      {
+                        compareWith === null &&
+                        <Tooltip delayDuration={1000}>
+                          <TooltipTrigger>
+                            <RotateCwIcon
+                              className={cn("size-4 ml-2 cursor-pointer")}
+                              onClick={() => onSubmit(command)}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Run again
+                          </TooltipContent>
+                        </Tooltip>
+                      }
+                    </div>
+                  </div>)
+            }
+          </div>
         </div>
       </div>
+
       <div className="flex items-center w-full text-sm font-light">
         <textarea
           className="flex-1 h-10 p-2 dark:border-tw-dark-border border rounded"

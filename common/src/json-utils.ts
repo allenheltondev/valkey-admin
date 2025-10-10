@@ -24,10 +24,13 @@ export type DiffEntry = {
 // takes an object and converts it into a key path array (without a value), for example,
 // { a: { b: { c: 42, d: 24 } } } will turn into [["a", "b", "c"], ["a", "b", "d"]]
 // we'll use these paths in getters R.path to compare if a deeply nested value changed between A and B (see below)
-const toKeyPaths = (obj: JSONValue, path: string[] = []): string[][] =>
-  typeof obj !== "object" || obj === null
-    ? [path]
-    : Object.entries(obj).flatMap(([key, val]) => toKeyPaths(val, [...path, key]))
+export const toKeyPaths = (obj: JSONValue, path: string[] = []): string[][] =>
+  R.isNil(obj)
+    ? (path.length === 0 ? [] : [path]) // root nil => [], nested nil => [path]
+    : typeof obj !== "object"
+      ? [path] // primitives are leaves
+      : Object.entries(obj as Record<string, JSONValue>)
+        .flatMap(([key, val]) => toKeyPaths(val as JSONValue, [...path, key]))
 
 // we have to do this instead of Ramda.map on the tuple to satisfy TS
 const mapPaths = (pair: readonly [JSONObject, JSONObject]): string[][][] => [
@@ -53,3 +56,17 @@ export const diff = (a:JSONObject, b:JSONObject): DiffEntry[] =>
     }, [])
   )([a, b] as const)
 
+// combining a list of paths back into a json object (which we can then stringify to put into clipboard):
+// path[] -> Record<string, JSONValue>[] -> JSONObject
+export const toJson = (response) => (diffs: JSONObject[]) =>
+  R.pipe(
+    R.map(({ keyPath, keyPathString }) => ({ [keyPathString]: R.path(keyPath as string[], response) })),
+    R.reduce<JSONObject, JSONObject>(R.mergeLeft, {} as JSONObject),
+  )(diffs)
+
+// same as above but for DiffEntry[]
+export const diffToJson = (diffs: DiffEntry[]) =>
+  R.pipe(
+    R.map(({ keyPathString, valueA, valueB }) => ({ [keyPathString]: { valueA, valueB } })),
+    R.reduce<JSONObject, JSONObject>(R.mergeLeft, {} as JSONObject),
+  )(diffs)
