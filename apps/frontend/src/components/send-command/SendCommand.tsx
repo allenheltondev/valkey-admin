@@ -1,4 +1,4 @@
-import { GitCompareIcon, LayoutDashboard, RotateCwIcon } from "lucide-react"
+import { CopyIcon, GitCompareIcon, LayoutDashboard, RotateCwIcon } from "lucide-react"
 import React, { useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { useParams } from "react-router"
@@ -7,12 +7,13 @@ import { getNth, selectAllCommands } from "@/state/valkey-features/command/comma
 import { type CommandMetadata, sendRequested } from "@/state/valkey-features/command/commandSlice.ts"
 import RouteContainer from "@/components/ui/route-container.tsx"
 import { AppHeader } from "@/components/ui/app-header.tsx"
-import { cn } from "@/lib/utils.ts"
+import { cn, copyToClipboard } from "@/lib/utils.ts"
 import { Timestamp } from "@/components/ui/timestamp.tsx"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx"
 import DiffCommands from "@/components/send-command/DiffCommands.tsx"
 import Response from "@/components/send-command/Response.tsx"
 import { useAppDispatch } from "@/hooks/hooks.ts"
+import { toast } from "sonner"
 
 export function SendCommand() {
   const dispatch = useAppDispatch()
@@ -59,9 +60,8 @@ export function SendCommand() {
         title="Send Command"
       />
       <div className="flex-1 overflow-auto w-full flex flex-row gap-4">
-
         {/* response | diff */}
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-2">
           <h3 className="text-muted-foreground sticky top-0 text-right">{compareWith ? "Diff" : "Response"}</h3>
           <input
             className="mb-2 px-2 py-1 text-primary text-sm dark:border-tw-dark-border border rounded"
@@ -92,7 +92,7 @@ export function SendCommand() {
         </div>
 
         {/* commands history */}
-        <div className="flex flex-col">
+        <div className="flex flex-col flex-1 max-w-[40vw]">
           <h3 className="text-muted-foreground sticky top-0">History</h3>
           <input
             className="mb-2 px-2 py-1 text-primary text-sm dark:border-tw-dark-border border rounded"
@@ -101,7 +101,7 @@ export function SendCommand() {
             value={historyFilter}
           />
           <div
-            className="flex-1 whitespace-pre-wrap break-words bg-muted rounded p-2 font-mono gap-1 w-80 relative border
+            className="flex-1 shrink whitespace-pre-wrap break-words bg-muted rounded p-2 font-mono gap-1 relative border
             dark:border-tw-dark-border">
             {
               allCommands
@@ -121,7 +121,7 @@ export function SendCommand() {
                       timestamp={timestamp}
                     />
                     <Tooltip delayDuration={2000}>
-                      <TooltipTrigger className="flex-1">
+                      <TooltipTrigger asChild>
                         <div
                           className="truncate text-left cursor-pointer"
                           onClick={() => {
@@ -134,10 +134,26 @@ export function SendCommand() {
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="left">
-                        See response
+                        <p className="max-w-[50vw]">
+                          See response for:<br/>
+                          <code>{command}</code>
+                        </p>
                       </TooltipContent>
                     </Tooltip>
-                    <div className="flex flex-row justify-self-end">
+                    <div className="flex flex-row justify-self-end ml-auto">
+                      <Tooltip delayDuration={1000}>
+                        <TooltipTrigger>
+                          <CopyIcon
+                            className={cn("size-4 ml-2 cursor-pointer")}
+                            onClick={async () => {
+                              await copyToClipboard(command).then(() => toast.success("Copied!"))
+                            }}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Copy
+                        </TooltipContent>
+                      </Tooltip>
                       {
                         i !== commandIndex && i !== compareWith && canDiff(i) &&
                         <Tooltip delayDuration={1000}>
