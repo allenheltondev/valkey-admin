@@ -7,7 +7,7 @@ import type { Path } from "ramda"
 export const getNth = (index: number = 0, id: string) => (state: RootState) =>
   R.pipe(
     R.path(<Path>[VALKEY.COMMAND.name, id, "commands", index]),
-    R.defaultTo({} as CommandMetadata)
+    R.defaultTo({} as CommandMetadata),
   )(state)
 
 export const selectAllCommands = (id: string) => (state: RootState) =>

@@ -2,7 +2,7 @@ import { GitCompareIcon, LayoutDashboard, RotateCwIcon } from "lucide-react"
 import React, { useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { useParams } from "react-router"
-import { useAppDispatch } from "@/hooks/hooks.ts"
+import type { JSONObject } from "@common/src/json-utils.ts"
 import { getNth, selectAllCommands } from "@/state/valkey-features/command/commandSelectors.ts"
 import { type CommandMetadata, sendRequested } from "@/state/valkey-features/command/commandSlice.ts"
 import RouteContainer from "@/components/ui/route-container.tsx"
@@ -12,7 +12,7 @@ import { Timestamp } from "@/components/ui/timestamp.tsx"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx"
 import DiffCommands from "@/components/send-command/DiffCommands.tsx"
 import Response from "@/components/send-command/Response.tsx"
-import type { JSONObject } from "@common/src/json-utils.ts"
+import { useAppDispatch } from "@/hooks/hooks.ts"
 
 export function SendCommand() {
   const dispatch = useAppDispatch()
@@ -69,13 +69,16 @@ export function SendCommand() {
             placeholder="Search keys"
             value={keysFilter}
           />
-          <pre className="flex-1 rounded bg-muted p-2 pr-4 overflow-y-auto whitespace-pre-wrap break-words border dark:border-tw-dark-border relative">
+          <pre
+            className="flex-1 rounded bg-muted p-2 pr-4 overflow-y-auto whitespace-pre-wrap break-words
+            border dark:border-tw-dark-border relative"
+          >
             <code className={`text-sm font-mono overflow-y-auto relative ${error ? "text-destructive" : "text-primary"}`}>
               {
                 compareWith === null ?
                   <Response
-                    response={response || error as JSONObject}
                     filter={keysFilter}
+                    response={response || error as JSONObject}
                   /> :
                   <DiffCommands
                     filter={keysFilter}
@@ -113,7 +116,10 @@ export function SendCommand() {
                     )}
                     key={timestamp}
                   >
-                    <Timestamp timestamp={timestamp} className="opacity-70" />
+                    <Timestamp
+                      className="opacity-70"
+                      timestamp={timestamp}
+                    />
                     <Tooltip delayDuration={2000}>
                       <TooltipTrigger className="flex-1">
                         <div

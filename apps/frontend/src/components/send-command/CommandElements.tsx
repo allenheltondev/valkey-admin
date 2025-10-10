@@ -1,7 +1,7 @@
-import { cn } from "@/lib/utils.ts"
 import * as R from "ramda"
 import React, { type PropsWithChildren } from "react"
 import { CopyIcon } from "lucide-react"
+import { cn } from "@/lib/utils.ts"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx"
 
 export const spacing = "py-0.5 px-2 mr-2 rounded"

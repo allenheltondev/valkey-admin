@@ -53,7 +53,7 @@ export const diff = (a:JSONObject, b:JSONObject): DiffEntry[] =>
       }
 
       return acc
-    }, [])
+    }, []),
   )([a, b] as const)
 
 // combining a list of paths back into a json object (which we can then stringify to put into clipboard):

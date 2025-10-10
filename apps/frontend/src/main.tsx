@@ -49,6 +49,6 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <AppWithHistory/>
     </BrowserRouter>
-  </Provider>
+  </Provider>,
   // </StrictMode>,
 )

@@ -298,7 +298,7 @@ export function KeyBrowser() {
                                     : element.value}
                                 </td>
                               </tr>
-                            )
+                            ),
                           )
                         ) : (
                           <tr>

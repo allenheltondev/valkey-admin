@@ -1,8 +1,7 @@
 import * as R from "ramda"
 import React from "react"
 import { toast } from "sonner"
-import type { JSONObject } from "@common/src/json-utils.ts"
-import { toJson, toKeyPaths } from "@common/src/json-utils.ts"
+import { toJson, toKeyPaths, type JSONObject } from "@common/src/json-utils.ts"
 import { cn, copyToClipboard } from "@/lib/utils.ts"
 import { CopyToClipboard, KeyFilterable, KV, spacing } from "@/components/send-command/CommandElements.tsx"
 

@@ -41,7 +41,7 @@ wss.on("connection", (ws: WebSocket) => {
             payload: {
               error: "Invalid connection Id",
             },
-          })
+          }),
         )
       }
     }
@@ -70,7 +70,7 @@ wss.on("connection", (ws: WebSocket) => {
               connectionId,
               error: "Invalid connection Id",
             },
-          })
+          }),
         )
       }
     } else if (action.type === VALKEY.KEYS.getKeyTypeRequested) {
@@ -88,7 +88,7 @@ wss.on("connection", (ws: WebSocket) => {
               key: action.payload?.key,
               error: "Invalid connection Id",
             },
-          })
+          }),
         )
       }
     } else if (action.type === VALKEY.KEYS.deleteKeyRequested) {
@@ -106,7 +106,7 @@ wss.on("connection", (ws: WebSocket) => {
               key: action.payload?.key,
               error: "Invalid connection Id",
             },
-          })
+          }),
         )
       }
     } else if (action.type === VALKEY.KEYS.addKeyRequested) {
@@ -124,7 +124,7 @@ wss.on("connection", (ws: WebSocket) => {
               key: action.payload?.key,
               error: "Invalid connection Id",
             },
-          })
+          }),
         )
       }
     } else {
@@ -150,7 +150,7 @@ async function connectToValkey(
     port: number;
     connectionId: string;
   },
-  clients: Map<string, GlideClient>
+  clients: Map<string, GlideClient>,
 ) {
   const addresses = [
     {
@@ -173,7 +173,7 @@ async function connectToValkey(
         payload: {
           connectionId: payload.connectionId,
         },
-      })
+      }),
     )
 
     return client
@@ -186,7 +186,7 @@ async function connectToValkey(
           err,
           connectionId: payload.connectionId,
         },
-      })
+      }),
     )
   }
 }
@@ -194,7 +194,7 @@ async function connectToValkey(
 async function setDashboardData(
   connectionId: string,
   client: GlideClient,
-  ws: WebSocket
+  ws: WebSocket,
 ) {
   const rawInfo = await client.info()
   const info = parseInfo(rawInfo)
@@ -218,7 +218,7 @@ async function setDashboardData(
         info: info,
         memory: memoryStats,
       },
-    })
+    }),
   )
 }
 
@@ -233,11 +233,11 @@ const parseInfo = (infoStr: string): Record<string, string> =>
 async function sendValkeyRunCommand(
   client: GlideClient,
   ws: WebSocket,
-  payload: { command: string; connectionId: string }
+  payload: { command: string; connectionId: string },
 ) {
   try {
     const rawResponse = (await client.customCommand(
-      payload.command.split(" ")
+      payload.command.split(" "),
     )) as string
     console.log("========")
     console.log(typeof rawResponse)
@@ -253,7 +253,7 @@ async function sendValkeyRunCommand(
           meta: { command: payload.command },
           type: VALKEY.COMMAND.sendFailed,
           payload: rawResponse,
-        })
+        }),
       )
     }
     ws.send(
@@ -261,7 +261,7 @@ async function sendValkeyRunCommand(
         meta: { connectionId: payload.connectionId, command: payload.command },
         type: VALKEY.COMMAND.sendFulfilled,
         payload: response,
-      })
+      }),
     )
   } catch (err) {
     ws.send(
@@ -269,7 +269,7 @@ async function sendValkeyRunCommand(
         meta: { connectionId: payload.connectionId, command: payload.command },
         type: VALKEY.COMMAND.sendFailed,
         payload: err,
-      })
+      }),
     )
     console.log("Error sending command to Valkey", err)
   }

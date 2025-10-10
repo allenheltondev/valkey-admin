@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils.ts"
 
 // shared 1s ticker (starts/stops automatically) with all Timestamp components, not just one
 const second$ = interval(1000).pipe(
-  share({ connector: () => new Subject<number>(), resetOnRefCountZero: true })
+  share({ connector: () => new Subject<number>(), resetOnRefCountZero: true }),
 )
 
 export function Timestamp({ className, timestamp }: { className?: string, timestamp: number }) {
@@ -15,7 +15,7 @@ export function Timestamp({ className, timestamp }: { className?: string, timest
 
   useEffect(() => {
     if (!hovered) return
-    const sub = second$.subscribe(() => force(x => x + 1))
+    const sub = second$.subscribe(() => force((x) => x + 1))
     return () => sub.unsubscribe()
   }, [hovered])
 

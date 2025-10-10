@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const copyToClipboard = async text => {
+export const copyToClipboard = async (text) => {
   try {
     await navigator.clipboard.writeText(text)
   } catch {
