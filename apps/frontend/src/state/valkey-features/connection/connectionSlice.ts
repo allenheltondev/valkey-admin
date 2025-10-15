@@ -11,6 +11,7 @@ interface ConnectionDetails {
   username: string;
   password: string;
   role?: Role;
+  clusterId?: string;
 }
 
 export interface ConnectionState {
@@ -53,12 +54,13 @@ const connectionSlice = createSlice({
       }
     },
     connectFulfilled: (state, action) => {
-      const { connectionId, clusterNodes } = action.payload
+      const { connectionId, clusterNodes, clusterId } = action.payload
       const connectionState = state.connections[connectionId]
       if (connectionState) {
         connectionState.status = CONNECTED
         connectionState.errorMessage = null
         connectionState.clusterNodes = clusterNodes
+        connectionState.connectionDetails.clusterId = clusterId
       }
     },
     connectRejected: (state, action) => {

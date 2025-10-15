@@ -52,6 +52,7 @@ export const VALKEY = {
     addCluster: "addCluster",
     updateClusterInfo: "updateClusterInfo",
     deleteCluster: "deleteCluster",
+    setClusterData: "setClusterData",
   } as const),
 } as const
 

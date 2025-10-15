@@ -1,5 +1,5 @@
 import { WebSocket, WebSocketServer } from "ws"
-import {  Decoder, GlideClient, GlideClusterClient, InfoOptions } from "@valkey/valkey-glide"
+import {  ClusterResponse, Decoder, GlideClient, GlideClusterClient, InfoOptions } from "@valkey/valkey-glide"
 import { VALKEY } from "../../../common/src/constants.ts"
 import { getKeys, getKeyInfoSingle, deleteKey } from "./keys-browser.ts"
 
@@ -21,12 +21,7 @@ wss.on("connection", (ws: WebSocket) => {
     } catch (e) {
       console.log("Failed to parse the message", message.toString(), e)
     }
-
     if (action.type === VALKEY.CONNECTION.connectPending) {
-      const { clusterId } = action.payload
-      if(clusterId) {
-        //TODO
-      }
       await connectToValkey(ws, action.payload, clients)
     }
     if (action.type === VALKEY.COMMAND.sendRequested) {
@@ -46,15 +41,21 @@ wss.on("connection", (ws: WebSocket) => {
     }
     if (action.type === VALKEY.STATS.setData) {
       const client = clients.get(connectionId)
-      if (client instanceof GlideClient) {
+
+      if(client instanceof GlideClient)
         await setDashboardData(connectionId, client, ws)
+
+    }
+    if(action.type === VALKEY.CLUSTER.setClusterData) {
+      const client = clients.get(connectionId)
+      if(client instanceof GlideClusterClient ) {
+        await setClusterDashboardData(action.payload.clusterId, client, ws)
       }
-      else if (client instanceof GlideClusterClient){
-        await setClusterDashboardData(connectionId, client, ws)
-      }
+
     }
     if (action.type === VALKEY.CONNECTION.resetConnection) {
       const client = clients.get(connectionId)
+
       if (client) {
         client.close()
         clients.delete(connectionId)
@@ -62,6 +63,7 @@ wss.on("connection", (ws: WebSocket) => {
     }
     if (action.type === VALKEY.KEYS.getKeysRequested) {
       const client = clients.get(connectionId)
+
       if (client) {
         await getKeys(client, ws, action.payload)
       } else {
@@ -75,9 +77,10 @@ wss.on("connection", (ws: WebSocket) => {
           })
         )
       }
-    } else if (action.type === VALKEY.KEYS.getKeyTypeRequested) {
+    } if (action.type === VALKEY.KEYS.getKeyTypeRequested) {
       console.log("Handling getKeyTypeRequested for key:", action.payload?.key)
       const client = clients.get(connectionId)
+
       if (client) {
         await getKeyInfoSingle(client, ws, action.payload)
       } else {
@@ -93,9 +96,10 @@ wss.on("connection", (ws: WebSocket) => {
           })
         )
       }
-    } else if (action.type === VALKEY.KEYS.deleteKeyRequested) {
+    } if (action.type === VALKEY.KEYS.deleteKeyRequested) {
       console.log("Handling deleteKeyRequested for key:", action.payload?.key)
       const client = clients.get(connectionId)
+
       if (client) {
         await deleteKey(client, ws, action.payload)
       } else {
@@ -200,6 +204,10 @@ async function discoverCluster(client: GlideClient) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await client.customCommand(["CLUSTER", "SLOTS"]) as any[][]
 
+    const firstSlotRange = response[0]
+    const firstPrimaryNode = firstSlotRange?.[2]
+    const clusterId = firstPrimaryNode?.[2]
+
     const clusterNodes = response.reduce((acc, slotRange) => {
       const [, , ...nodes] = slotRange
 
@@ -223,9 +231,11 @@ async function discoverCluster(client: GlideClient) {
       role: "primary" | "replica";
     }>)
 
-    return clusterNodes
+    return { clusterNodes, clusterId }
   } catch (err) {
     console.error("Error discovering cluster:", err)
+    throw new Error("Failed to discover cluster") 
+    
   }
 }
 
@@ -236,11 +246,10 @@ async function connectToCluster(
   payload: { host: string; port: number; connectionId: string;},
   addresses: { host: string, port: number | undefined }[]
 ) {
-  const clusterNodes = await discoverCluster(standaloneClient)
+  const { clusterNodes, clusterId } = await discoverCluster(standaloneClient)
   if (Object.keys(clusterNodes!).length === 0) {
     throw new Error("No cluster nodes discovered")
   }
-  const clusterId = Object.keys(clusterNodes!)[0]
   // May remove this if we agree to remove clusterSlice
   ws.send(
     JSON.stringify({
@@ -262,6 +271,7 @@ async function connectToCluster(
       payload: {
         connectionId: payload.connectionId,
         clusterNodes,
+        clusterId: clusterId,
       },
     })
   )
@@ -275,6 +285,7 @@ async function setDashboardData(
 ) {
   const rawInfo = await client.info()
   const info = parseInfo(rawInfo)
+  console.log(info)
   const rawMemoryStats = (await client.customCommand(["MEMORY", "STATS"], {
     decoder: Decoder.String,
   })) as Array<{
@@ -299,37 +310,60 @@ async function setDashboardData(
   )
 }
 
-//TODO FIX THIS 
-
 async function setClusterDashboardData(
-  connectionId: string,
+  clusterId: string,
   client: GlideClusterClient,
   ws: WebSocket
 ) {
-  const rawInfo = await client.info()
-  const info = parseInfo(rawInfo)
-  const rawMemoryStats = (await client.customCommand(["MEMORY", "STATS"], {
-    decoder: Decoder.String,
-  })) as Array<{
-    key: string;
-    value: string;
-  }>
-
-  const memoryStats = rawMemoryStats.reduce((acc, { key, value }) => {
-    acc[key] = value
-    return acc
-  }, {} as Record<string, string>)
+  const rawInfo = await client.info({ route:"allNodes" })
+  const info = parseClusterInfo(rawInfo)
 
   ws.send(
     JSON.stringify({
-      type: VALKEY.STATS.setData,
+      type: VALKEY.CLUSTER.setClusterData,
       payload: {
-        connectionId,
+        clusterId,
         info: info,
-        memory: memoryStats,
       },
     })
   )
+}
+
+type ParsedClusterInfo = {
+  [host: string]: {
+    [section: string]: {
+      [key: string]: string
+    }
+  }
+}
+
+function parseClusterInfo(rawInfo: ClusterResponse<string>): ParsedClusterInfo {
+  const result: ParsedClusterInfo = {}
+
+  for (const [host, infoString] of Object.entries(rawInfo)) {
+    const lines = infoString.split("\r\n")
+    let currentSection: string | null = null
+    const hostData: ParsedClusterInfo[string] = {}
+
+    for (const line of lines) {
+      if (line.trim() === "") continue
+
+      if (line.startsWith("# ")) {
+
+        currentSection = line.slice(2).trim()
+        hostData[currentSection] = {}
+      } else {
+
+        if (!currentSection) continue 
+
+        const [key, ...rest] = line.split(":")
+        const value = rest.join(":") 
+        hostData[currentSection][key] = value
+      }
+    }
+    result[host] = hostData
+  }
+  return result
 }
 
 const parseInfo = (infoStr: string): Record<string, string> =>
