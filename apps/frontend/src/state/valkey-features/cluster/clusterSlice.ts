@@ -25,6 +25,7 @@ interface ParsedNodeInfo {
   instantaneous_ops_per_sec: string | null;
   total_commands_processed: string | null;
   role: string | null;
+  connected_clients: string | null;
 }
 
 interface ClusterState {
@@ -76,6 +77,7 @@ const clusterSlice = createSlice({
         instantaneous_ops_per_sec: R.path(["Stats", "instantaneous_ops_per_sec"]),
         total_commands_processed: R.path(["Stats", "total_commands_processed"]),
         role: R.path(["Replication", "role"]),
+        connected_clients: R.path(["Clients", "connected_clients"]),
       })
 
       const result: ClusterState[string]["data"] = {}

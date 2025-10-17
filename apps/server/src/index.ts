@@ -317,6 +317,7 @@ async function setClusterDashboardData(
 ) {
   const rawInfo = await client.info({ route:"allNodes" })
   const info = parseClusterInfo(rawInfo)
+  console.log("The info is: ", info)
 
   ws.send(
     JSON.stringify({

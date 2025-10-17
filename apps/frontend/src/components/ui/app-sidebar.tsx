@@ -7,7 +7,8 @@ import {
   Cog,
   CircleQuestionMark,
   Github,
-  Compass
+  Compass,
+  Server
 } from "lucide-react"
 import { Link, useLocation, useParams } from "react-router"
 import { useState } from "react"
@@ -63,6 +64,16 @@ export function AppSidebar() {
                     title: "Send Command", 
                     icon: Send, 
                   },
+                  ...(clusterId
+                    ? [
+                      {
+                        to: `/${clusterId}/${id}/clustertopology`,
+                        title: "Cluster Topology",
+                        icon: Server,
+                      },
+                    ]
+                    : []),
+
                 ]
                 : []),
             ].map(({ to, title, icon: Icon }) => (

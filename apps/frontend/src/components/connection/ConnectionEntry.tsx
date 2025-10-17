@@ -61,14 +61,14 @@ export const ConnectionEntry = ({ connectionId, connection, clusterId }: Connect
       </div>
       {
         <Button asChild className={cn(!isConnected && "pointer-events-none", "justify-self-start")} variant="link">
-          <Link title={label} to={`/${clusterId}/${connectionId}/dashboard`}>{label}</Link>
+          <Link title={label} to={(clusterId ? `/${clusterId}/${connectionId}/dashboard` : `/${connectionId}/dashboard`)}>{label}</Link>
         </Button>
       }
       <div className="flex flex-row justify-end">
         {
           isConnected &&
           <>
-            <Button onClick={() => history.navigate(`/${clusterId}/${connectionId}/dashboard`)} variant="ghost">
+            <Button onClick={() => history.navigate(clusterId ? `/${clusterId}/${connectionId}/clustertopology` : `/${connectionId}/dashboard`)} variant="ghost">
               <CircleChevronRight />
               Open
             </Button>
