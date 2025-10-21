@@ -1,5 +1,5 @@
 import { WebSocket } from "ws"
-import { GlideClient, GlideClusterClient, Batch } from "@valkey/valkey-glide"
+import { GlideClient, GlideClusterClient, Batch, ClusterBatch } from "@valkey/valkey-glide"
 import * as R from "ramda"
 import { VALKEY } from "../../../common/src/constants.ts"
 
@@ -397,17 +397,34 @@ async function updateListKey(
   updates: { index: number; value: string }[],
   ttl?: number,
 ) {
-  const batch = new Batch(true)
 
-  updates.map(({ index, value }) =>
-    batch.customCommand(["LSET", key, index.toString(), value]),
-  )
+  if (client instanceof GlideClient) {
+    const batch = new Batch(true)
 
-  if (ttl && ttl > 0) {
-    batch.customCommand(["EXPIRE", key, ttl.toString()])
+    updates.forEach(({ index, value }) =>
+      batch.customCommand(["LSET", key, index.toString(), value]),
+    )
+
+    if (ttl && ttl > 0) {
+      batch.customCommand(["EXPIRE", key, ttl.toString()])
+    }
+
+    await client.exec(batch, true)
+  } else if (client instanceof GlideClusterClient) {
+    const batch = new ClusterBatch(true)
+
+    updates.forEach(({ index, value }) =>
+      batch.customCommand(["LSET", key, index.toString(), value]),
+    )
+
+    if (ttl && ttl > 0) {
+      batch.customCommand(["EXPIRE", key, ttl.toString()])
+    }
+
+    await client.exec(batch, true)
+  } else {
+    throw new Error("Unsupported client type")
   }
-
-  await client.exec(batch, true)
 }
 
 async function updateSetKey(
@@ -416,18 +433,36 @@ async function updateSetKey(
   updates: { oldValue: string; newValue: string }[],
   ttl?: number,
 ) {
-  const batch = new Batch(true)
+  if (client instanceof GlideClient) {
+    const batch = new Batch(true)
 
-  for (const { oldValue, newValue } of updates) {
-    batch.customCommand(["SREM", key, oldValue])
-    batch.customCommand(["SADD", key, newValue])
+    for (const { oldValue, newValue } of updates) {
+      batch.customCommand(["SREM", key, oldValue])
+      batch.customCommand(["SADD", key, newValue])
+    }
+
+    if (ttl && ttl > 0) {
+      batch.customCommand(["EXPIRE", key, ttl.toString()])
+    }
+
+    await client.exec(batch, true)
   }
+  else if (client instanceof GlideClusterClient) {
+    const batch = new ClusterBatch(true)
 
-  if (ttl && ttl > 0) {
-    batch.customCommand(["EXPIRE", key, ttl.toString()])
+    for (const { oldValue, newValue } of updates) {
+      batch.customCommand(["SREM", key, oldValue])
+      batch.customCommand(["SADD", key, newValue])
+    }
+
+    if (ttl && ttl > 0) {
+      batch.customCommand(["EXPIRE", key, ttl.toString()])
+    }
+
+    await client.exec(batch, true)
+  } else {
+    throw new Error("Unsupported client type")
   }
-
-  await client.exec(batch, true)
 }
 
 export async function updateKey(
