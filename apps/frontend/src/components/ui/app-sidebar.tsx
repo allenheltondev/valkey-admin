@@ -30,7 +30,7 @@ export function AppSidebar() {
   return (
     <nav
       className={`bg-white dark:bg-tw-dark-primary ${isExpanded ? "w-52" : "w-18"
-        } h-screen p-4 shadow-lg border-r-2 dark:border-tw-dark-border dark:border-r-1 flex flex-col justify-between transition-all duration-300 items-start relative`}
+      } h-screen p-4 shadow-lg border-r-2 dark:border-tw-dark-border dark:border-r-1 flex flex-col justify-between transition-all duration-300 items-start relative`}
     >
       <div className="flex flex-col items-start w-full">
         {/* Header */}
