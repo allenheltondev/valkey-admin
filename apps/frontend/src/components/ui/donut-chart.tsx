@@ -65,10 +65,10 @@ export default function DonutChart() {
   const totalMemory = calculateTotalMemoryUsage(keys)
 
   const chartColors: Record<string, string> = {
-    "Set": "var(--tw-chart-set)",
-    "Hash": "var(--tw-chart-hash)",
-    "List": "var(--tw-chart-list)",
-    "String": "var(--tw-chart-string)",
+    "Set": "var(--tw-chart3)",
+    "Hash": "var(--tw-chart1)",
+    "List": "var(--tw-chart4)",
+    "String": "var(--tw-chart2)",
   }
 
   const CustomTooltip = ({ active, payload }: TooltipProps) => {
