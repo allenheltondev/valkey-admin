@@ -79,6 +79,15 @@ while [ "$i" -lt 120 ]; do
   if [ "$state" = "ok" ] && [ "$known" = "6" ] && [ "$size" = "3" ] && [ "$slots" = "16384" ] && [ "$masters" = "3" ]; then
     echo ""
     echo "🫡 SUCCESS: Valkey cluster is ready."
+
+    MASTER_NODES_DIR="/app/output"
+    MASTER_NODES_FILE="$MASTER_NODES_DIR/master_nodes.txt"
+    mkdir -p "$MASTER_NODES_DIR"
+    {
+      echo "Master node ports:"
+      valkey-cli -h "$FIRST_HOST" -p "$FIRST_PORT" CLUSTER NODES | grep master | awk '{print $2}' | sed 's/@.*//' | awk -F: '{print $2}' 
+    } | tee -a "$MASTER_NODES_FILE"
+    echo "Master nodes saved to $MASTER_NODES_FILE"
     exit 0
   fi
   i=$((i+1))
