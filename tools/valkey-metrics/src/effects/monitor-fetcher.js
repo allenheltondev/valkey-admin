@@ -35,8 +35,6 @@ export const makeMonitorFetcher = (onLogs = async () => {}, config) => {
           await onLogs(logs)
         }
         console.info("Monitor sleeping for ", monitoringInterval/1000, " seconds")
-
-
         
         await sleep(monitoringInterval)
       

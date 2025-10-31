@@ -21,8 +21,8 @@ const setupCollectors = async client => {
     if(f.type === "monitor"){
       sink = {
         appendRows: async rows => {
-          const file = await nd.appendRows(rows, { newFile: true }) // new file per batch
-          console.info(`[${f.name}] wrote ${rows.length} logs to ${file}`)
+          await nd.appendRows(rows, { newFile: true }) // new file per batch
+          console.info(`[${f.name}] wrote ${rows.length} logs to ${nd.dataDir}`)
         },
         close: nd.close
       }
