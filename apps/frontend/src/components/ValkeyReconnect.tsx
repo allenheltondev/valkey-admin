@@ -21,7 +21,7 @@ export function ValkeyReconnect() {
     // Redirect to dashboard on successful connection
     if (status === CONNECTED) {
       const redirectTo = sessionStorage.getItem(`valkey-previous-${connectionId}`) ||
-                (clusterId ? `/${clusterId}/${connectionId}/dashboard` : `/${connectionId}/dashboard`)
+        (clusterId ? `/${clusterId}/${connectionId}/dashboard` : `/${connectionId}/dashboard`)
       sessionStorage.removeItem(`valkey-previous-${connectionId}`)
       navigate(redirectTo, { replace: true })
     }
@@ -107,8 +107,11 @@ export function ValkeyReconnect() {
           <div className="space-y-3">
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
               <div
-                className="bg-tw-primary h-full transition-all duration-300 ease-out"
-                style={{ width: `${getProgressPercentage()}%` }}
+                className="bg-tw-primary h-full ease-linear"
+                style={{
+                  width: `${getProgressPercentage()}%`,
+                  transition: `width ${reconnect.nextRetryDelay}ms linear`,
+                }}
               />
             </div>
 

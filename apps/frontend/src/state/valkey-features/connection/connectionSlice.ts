@@ -60,7 +60,7 @@ const connectionSlice = createSlice({
 
       state.connections[connectionId] = {
         status: CONNECTING,
-        errorMessage: null,
+        errorMessage: isRetry && existingConnection?.errorMessage ? existingConnection.errorMessage : null,
         connectionDetails: { host, port, username, password },
         ...(existingConnection?.clusterNodes && { clusterNodes: existingConnection.clusterNodes }),
         ...(isRetry && existingConnection?.reconnect && {
@@ -83,8 +83,16 @@ const connectionSlice = createSlice({
     connectRejected: (state, action) => {
       const { connectionId, errorMessage } = action.payload
       if (state.connections[connectionId]) {
+        const existingConnection = state.connections[connectionId]
+        const isRetrying = existingConnection.reconnect?.isRetrying
+
         state.connections[connectionId].status = ERROR
-        state.connections[connectionId].errorMessage = errorMessage || "Valkey error"
+        // Preserve original error message during retry attempts
+        if (isRetrying && existingConnection.errorMessage) {
+          state.connections[connectionId].errorMessage = existingConnection.errorMessage
+        } else {
+          state.connections[connectionId].errorMessage = errorMessage || "Valkey error"
+        }
       }
     },
     startRetry: (state, action) => {
