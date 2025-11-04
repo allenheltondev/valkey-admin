@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate, useParams } from "react-router"
 import { CONNECTED, CONNECTING, ERROR } from "@common/src/constants"
 import { Loader2, Database, AlertCircle } from "lucide-react"
 import type { RootState } from "@/store"
 import { connectPending } from "@/state/valkey-features/connection/connectionSlice"
+import RetryProgress from "./ui/retry-progress"
 
 export function ValkeyReconnect() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { id } = useParams()
-  const [shouldAnimate, setShouldAnimate] = useState(false)
 
   const connection = useSelector((state: RootState) =>
     state.valkeyConnection?.connections?.[id!],
@@ -26,17 +26,6 @@ export function ValkeyReconnect() {
       navigate(redirectTo, { replace: true })
     }
   }, [status, navigate, id])
-
-  useEffect(() => {
-    if (reconnect?.isRetrying && reconnect?.nextRetryDelay) {
-      setShouldAnimate(false)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setShouldAnimate(true)
-        })
-      })
-    }
-  }, [reconnect?.currentAttempt, reconnect?.isRetrying, reconnect?.nextRetryDelay])
 
   const handleManualReconnect = () => {
     if (!connection) return
@@ -104,18 +93,7 @@ export function ValkeyReconnect() {
         {/* Retry Progress */}
         {reconnect?.isRetrying && (
           <div className="space-y-3">
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-tw-primary h-full"
-                // using dynamic style here as tailwindcss has predefined (w-full, w-1/2)
-                style={{
-                  width: shouldAnimate && reconnect?.nextRetryDelay ? "100%" : "0%",
-                  transition: shouldAnimate && reconnect?.nextRetryDelay
-                    ? `width ${reconnect.nextRetryDelay}ms linear`
-                    : "none",
-                }}
-              />
-            </div>
+            <RetryProgress key={reconnect.nextRetryDelay} nextRetryDelay={reconnect.nextRetryDelay!} />
 
             {/* Retry Information */}
             <div className="flex justify-between text-sm">

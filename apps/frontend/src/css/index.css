@@ -138,3 +138,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes linearProgress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.animate-linear-progress {
+  animation-name: linearProgress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
