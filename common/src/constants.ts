@@ -73,7 +73,7 @@ export const LOCAL_STORAGE = {
   VALKEY_CONNECTIONS: "VALKEY_CONNECTIONS",
 }
 
-export const WS_RETRY_CONFIG = {
+export const RETRY_CONFIG = {
   MAX_RETRIES: 8,
   BASE_DELAY: 1000,
   MAX_DELAY: 30000,
@@ -86,6 +86,7 @@ export const retryDelay = (retryCount: number): number => {
     [a, b] = [b, a + b]
   }
 
-  const delay = WS_RETRY_CONFIG.BASE_DELAY * b
-  return Math.min(delay, WS_RETRY_CONFIG.MAX_DELAY)
+  const delay = RETRY_CONFIG.BASE_DELAY * b
+  return Math.min(delay, RETRY_CONFIG.MAX_DELAY)
 }
+

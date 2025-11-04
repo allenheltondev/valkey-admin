@@ -3,10 +3,11 @@ import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router"
 import { CONNECTED, CONNECTING, ERROR } from "@common/src/constants"
 import { Loader2, WifiOff, AlertCircle, ServerOff } from "lucide-react"
+import RetryProgress from "./ui/retry-progress"
 import type { RootState } from "@/store"
 import { connectPending } from "@/state/wsconnection/wsConnectionSlice"
 
-export function Reconnect() {
+export function WebSocketReconnect() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const wsConnection = useSelector((state: RootState) => state.websocket)
@@ -23,11 +24,6 @@ export function Reconnect() {
 
   const handleManualReconnect = () => {
     dispatch(connectPending())
-  }
-
-  const getProgressPercentage = () => {
-    if (reconnect.maxRetries === 0) return 0
-    return ((reconnect.currentAttempt) / reconnect.maxRetries) * 100
   }
 
   const getNextRetrySeconds = () => {
@@ -80,12 +76,7 @@ export function Reconnect() {
         {/* Retry Progress */}
         {reconnect.isRetrying && (
           <div className="space-y-3">
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-tw-primary h-full transition-all duration-300 ease-out"
-                style={{ width: `${getProgressPercentage()}%` }}
-              />
-            </div>
+            <RetryProgress key={reconnect.nextRetryDelay} nextRetryDelay={reconnect.nextRetryDelay!}/>
 
             {/* Retry Information */}
             <div className="flex justify-between text-sm">
