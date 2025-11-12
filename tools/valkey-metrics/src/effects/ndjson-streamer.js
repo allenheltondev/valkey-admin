@@ -7,7 +7,7 @@ const DATA_DIR = process.env.METRICS_DIR || path.resolve(process.cwd(), "data");
 
 const fileFor = (prefix, date) => path.join(DATA_DIR, `${prefix}_${ymd(date)}.ndjson`);
 
-export async function streamNdjson(prefix) {
+export async function streamNdjson(prefix, filterFn = () => true) {
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
@@ -24,7 +24,9 @@ export async function streamNdjson(prefix) {
     for await (const line of rl) {
       if (!line.trim()) continue;
       try {
-        results.push(JSON.parse(line));
+        const obj = JSON.parse(line);
+        if (filterFn(obj))  results.push(obj)
+       
       } catch {
         // ignore bad lines
       }
