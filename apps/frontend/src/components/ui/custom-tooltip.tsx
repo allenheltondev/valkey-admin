@@ -9,9 +9,10 @@ interface CustomTooltipProps {
   children: React.ReactNode;
   content?: string;
   description?: string;
+  unit?: string;
 }
 
-export function CustomTooltip({ children, content, description }: CustomTooltipProps) {
+export function CustomTooltip({ children, content, description, unit }: CustomTooltipProps) {
   return (
     <Tooltip delayDuration={200}>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
@@ -31,6 +32,9 @@ export function CustomTooltip({ children, content, description }: CustomTooltipP
           side="right"
         >
           <p>{description}</p>
+          {unit && (
+            <p className="bg-white/20 rounded-full px-1 py-0.5 text-xs mt-1 font-medium text-white inline-block w-fit">{unit}</p>
+          )}
         </TooltipContent>
       }
     </Tooltip>

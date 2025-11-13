@@ -10,10 +10,11 @@ interface AccordionProps {
   valueType?: ValueType;
   searchQuery?: string;
   accordionDescription?: string;
+  singleMetricDescriptions?: Record<string, { description: string; unit: string }>;
 }
 
 export default function Accordion({ accordionName, accordionItems, valueType = "number", searchQuery = "",
-  accordionDescription = "" }: AccordionProps) {
+  accordionDescription = "", singleMetricDescriptions = {} }: AccordionProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   const ToggleIcon = isOpen ? CircleChevronUp : CircleChevronDown
@@ -83,7 +84,14 @@ export default function Accordion({ accordionName, accordionItems, valueType = "
           <ul className="space-y-2">
             {Object.entries(filteredItems).map(([key, value]) => (
               <li className="flex justify-between items-center hover:bg-tw-primary/20" key={key}>
-                <span className="font-normal flex items-center"><Dot className="text-tw-primary" size={30} />{formatKey(key)}</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-normal flex items-center"><Dot className="text-tw-primary" size={30} />{formatKey(key)}</span>
+                  {singleMetricDescriptions[key] && (
+                    <CustomTooltip description={singleMetricDescriptions[key].description} unit={singleMetricDescriptions[key].unit}>
+                      <CircleQuestionMark className="bg-tw-primary/10 rounded-full text-tw-primary" size={13} />
+                    </CustomTooltip>
+                  )}
+                </div>
                 <span className="font-light">{formatMetricValue(key, value, valueType)}</span>
               </li>
             ))}
