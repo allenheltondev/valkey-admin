@@ -1,8 +1,8 @@
 import * as R from 'ramda'
-import * as Streamer from '../effects/ndjson-streamer'
+import * as Streamer from '../effects/ndjson-streamer.js'
 
-export const calculateHotKeys = () => {
-  const rows = Streamer.monitor()
+export const calculateHotKeys = async () => {
+  const rows = await Streamer.monitor()
   const ACCESS_COMMANDS = ["get", "set", "mget", "hget", "hgetall", "hmget", "json.get", "json.mget"]
   const CUT_OFF_FREQUENCY = 1
 

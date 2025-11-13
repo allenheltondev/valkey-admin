@@ -37,4 +37,4 @@ export async function streamNdjson(prefix, filterFn = () => true) {
 }
 
 export const [memory_stats, info_cpu, slowlog_len, slowlog_get, monitor] =
-  ['memory', 'cpu', 'slowlog_len', 'slowlog', 'monitor'].map(filePrefix => () => readTwoDaysRows(filePrefix))
+  ['memory', 'cpu', 'slowlog_len', 'slowlog', 'monitor'].map(filePrefix => () => streamNdjson(filePrefix))

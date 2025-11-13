@@ -4,6 +4,7 @@ import { createClient } from "@valkey/client"
 import { loadConfig } from "./config.js"
 import * as Streamer from "./effects/ndjson-streamer.js"
 import { setupCollectors } from "./init-collectors.js"
+import { calculateHotKeys } from "./analyzers/calculateHotKeys.js"
 
 const cfg = loadConfig()
 
@@ -75,6 +76,15 @@ app.get('/monitor', async (_req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
+app.get('/hot-keys', async (_req, res) => {
+  try {
+    const hotkeys = await calculateHotKeys()
+    res.json(hotkeys)
+  } catch (e) {
+    res.status(500).json({error: e.message})
+  }
+})
 
 const port = Number(cfg.server.port || 3000)
 const server = app.listen(port, () => {
