@@ -4,6 +4,8 @@ import { LayoutDashboard, Search } from "lucide-react"
 import { useParams } from "react-router"
 import { formatBytes } from "@common/src/bytes-conversion"
 import { Database } from "lucide-react"
+import { accordionDescriptions } from "@common/src/dashboard-metrics"
+import { singleMetricDescriptions } from "@common/src/dashboard-metrics"
 import { AppHeader } from "./ui/app-header"
 import Accordion from "./ui/accordion"
 import DonutChart from "./ui/donut-chart"
@@ -43,6 +45,7 @@ export function Dashboard() {
   const clientConnectivityMetrics = {
     blocked_clients: infoData.blocked_clients,
     clients_in_timeout_table: infoData.clients_in_timeout_table,
+    connected_clients : infoData.connected_clients,
     connected_slaves: infoData.connected_slaves,
     total_connections_received: infoData.total_connections_received,
     evicted_clients: infoData.evicted_clients,
@@ -115,39 +118,53 @@ export function Dashboard() {
             />
           </div>
           <Accordion
+            accordionDescription={accordionDescriptions.memoryUsageMetrics}
             accordionItems={memoryUsageMetrics}
             accordionName="Memory Usage Metrics"
             searchQuery={searchQuery}
+            singleMetricDescriptions={singleMetricDescriptions} 
             valueType="bytes" />
           <Accordion
+            accordionDescription={accordionDescriptions.uptimeMetrics}
             accordionItems={upTimeMetrics}
             accordionName="Uptime Metrics"
             searchQuery={searchQuery}
+            singleMetricDescriptions={singleMetricDescriptions} 
             valueType="mixed" />
           <Accordion
+            accordionDescription={accordionDescriptions.replicationPersistenceMetrics}
             accordionItems={replicationPersistenceMetrics}
             accordionName="Replication & Persistence Metrics"
             searchQuery={searchQuery}
+            singleMetricDescriptions={singleMetricDescriptions} 
             valueType="number" />
           <Accordion
+            accordionDescription={accordionDescriptions.clientConnectivityMetrics}
             accordionItems={clientConnectivityMetrics}
             accordionName="Client Connectivity Metrics"
             searchQuery={searchQuery}
+            singleMetricDescriptions={singleMetricDescriptions} 
             valueType="number" />
           <Accordion
+            accordionDescription={accordionDescriptions.commandExecutionMetrics}
             accordionItems={commandExecutionMetrics}
             accordionName="Command Execution Metrics"
             searchQuery={searchQuery}
+            singleMetricDescriptions={singleMetricDescriptions} 
             valueType="number" />
           <Accordion
+            accordionDescription={accordionDescriptions.dataEffectivenessEvictionMetrics}
             accordionItems={dataEffectivenessAndEvictionMetrics}
             accordionName="Data Effectiveness & Eviction Metrics"
-            searchQuery={searchQuery}
+            searchQuery={searchQuery} 
+            singleMetricDescriptions={singleMetricDescriptions}
             valueType="number" />
           <Accordion
+            accordionDescription={accordionDescriptions.messagingMetrics}
             accordionItems={messagingMetrics}
             accordionName="Messaging Metrics"
-            searchQuery={searchQuery}
+            searchQuery={searchQuery} 
+            singleMetricDescriptions={singleMetricDescriptions}
             valueType="number" />
         </div>
         {/* Chart Area */}
