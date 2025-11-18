@@ -3,7 +3,7 @@ const path = require('path');
 const { fork } = require('child_process');
 
 let serverProcess;
-let metricsProcess;
+let metricsProcesses = new Map();
 
 function startServer() {
     if (app.isPackaged) {
@@ -20,25 +20,59 @@ function startServer() {
     }
 }
 
-function startMetrics() {
-    if (app.isPackaged) {
-        const metricsServerPath = path.join(process.resourcesPath, 'server-metrics.js');
-        console.log(`Starting metrics server from: ${metricsServerPath}`);
-        metricsProcess = fork(metricsServerPath, [], {
-            env: {
-                ...process.env,
-                VALKEY_URL: 'valkey://localhost:6379',
-                DATA_DIR: path.join(app.getPath('userData'), 'metrics-data')
-            }
-        });
+function startMetrics(serverConnectionId, serverConnectionDetails) {
+    const dataDir = path.join(app.getPath('userData'), 'metrics-data', serverConnectionId);
 
-        metricsProcess.on('close', (code) => {
-            console.log(`Metrics server exited with code ${code}`);
-        });
-        metricsProcess.on('error', (err) => {
-            console.error(`Metrics server error: ${err}`);
-        });
+    let metricsServerPath;
+    let configPath;
+
+    if (app.isPackaged) {
+        metricsServerPath = path.join(process.resourcesPath, 'server-metrics.js');
+        configPath = path.join(process.resourcesPath, 'config.yml'); // Path for production
+    } else {
+        metricsServerPath = path.join(__dirname, '../../metrics/src/index.js');
+        configPath = path.join(__dirname, '../../metrics/config.yml'); // Path for development
     }
+
+    console.log(`Starting metrics server for connection ${serverConnectionId}...`);
+
+    const metricsProcess = fork(metricsServerPath, [], {
+        env: {
+            ...process.env,
+            PORT: 0,
+            DATA_DIR: dataDir,
+            VALKEY_URL: `valkey://${serverConnectionDetails.host}:${serverConnectionDetails.port}`,
+            CONFIG_PATH: configPath // Explicitly provide the config path
+        }
+    });
+
+    metricsProcesses.set(serverConnectionId, metricsProcess);
+
+    metricsProcess.on('message', (message) => {
+        if (message && message.type === 'metrics-started') {
+            console.log(`Metrics server for ${serverConnectionId} started successfully on port ${message.port}`);
+        }
+    });
+
+    metricsProcess.on('close', (code) => {
+        console.log(`Metrics server for connection ${serverConnectionId} exited with code ${code}`);
+        metricsProcesses.delete(serverConnectionId);
+    });
+
+    metricsProcess.on('error', (err) => {
+        console.error(`Metrics server for connection ${serverConnectionId} error: ${err}`);
+    });
+}
+
+// Disconnect functionality in the server has not been implemented. Once that is implemented, this can be used.
+function stopMetricServer(serverConnectionId) {
+    metricsProcesses.get(serverConnectionId).kill();
+}
+
+function stopMetricServers() {
+    metricsProcesses.forEach((_serverConnectionId, metricProcess) => {
+        metricProcess.kill();
+    })
 }
 
 function createWindow() {
@@ -61,11 +95,22 @@ function createWindow() {
 
 app.whenReady().then(() => {
     startServer();
-    startMetrics();
     if (serverProcess) {
         serverProcess.on('message', (message) => {
-            if (message === 'ready') {
-                createWindow();
+            switch (message.type) {
+                case 'websocket-ready':
+                    createWindow();
+                    break;
+                case 'valkeyConnection/standaloneConnectFulfilled':
+                    startMetrics(message.payload.connectionId, message.payload.connectionDetails);
+                    break;
+                default:
+                    try {
+                        console.log(`Received unknown server message: ${JSON.stringify(message)}`);
+                    } catch (_) {
+                        console.log(`Received unknown server message: ${message}`);
+                    }
+
             }
         });
     } else {
@@ -83,8 +128,8 @@ app.on('before-quit', () => {
     if (serverProcess) {
         serverProcess.kill();
     }
-    if (metricsProcess) {
-        metricsProcess.kill();
+    if (metricsProcesses.length > 0) {
+        stopMetricServers();
     }
 });
 

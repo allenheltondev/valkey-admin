@@ -28,18 +28,22 @@ export async function connectToValkey(
     })
     console.log("Connected to standalone")
     clients.set(payload.connectionId, standaloneClient)
-    ws.send(
-      JSON.stringify({
-        type: VALKEY.CONNECTION.standaloneConnectFulfilled,
-        payload: {
-          connectionId: payload.connectionId,
-          connectionDetails: {
-            host: payload.host,
-            port: payload.port,
-          },
+    const connectionInfo = {
+      type: VALKEY.CONNECTION.standaloneConnectFulfilled,
+      payload: {
+        connectionId: payload.connectionId,
+        connectionDetails: {
+          host: payload.host,
+          port: payload.port,
         },
-      }),
+      },
+    }
+    ws.send(
+      JSON.stringify(connectionInfo),
     )
+
+    // if child process of React app, send the message. Else do nothing.
+    process.send?.(connectionInfo)
 
     if (await belongsToCluster(standaloneClient)) {
       return connectToCluster(standaloneClient, ws, clients, payload, addresses)

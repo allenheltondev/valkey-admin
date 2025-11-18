@@ -132,9 +132,12 @@ async function main() {
     }
   })
 
-  const port = Number(cfg.server.port || 3000)
+  // Setting port to 0 means Express will dynamically find a port
+  const port = Number(cfg.server.port || 0)
   const server = app.listen(port, () => {
-    console.log(`listening on http://0.0.0.0:${port}`)
+    const assignedPort = server.address().port;
+    console.log(`listening on http://0.0.0.0:${assignedPort}`)
+    process.send?.({ type: 'metrics-started', payload: { valkeyUrl: url, metricsHost: 'http://0.0.0.0', metricsPort: assignedPort } });
   })
 
   const shutdown = async () => {
