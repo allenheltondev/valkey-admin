@@ -80,23 +80,25 @@ async function main() {
       switch (action) {
         case ACTION.START:
           if (monitorRunning) {
-            return { status: 'Monitor already running.', }
+            return { monitorRunning }
           }
           await startMonitor()
           monitorRunning = true
-          console.log(monitorDuration)
-          return { status: 'Monitor started.', checkAt: Date.now() + monitorDuration }
+          checkAt = Date.now() + monitorDuration
+          return { monitorRunning, checkAt}
 
         case ACTION.STOP:
           if (!monitorRunning) {
-            return { status: 'Monitor is already stopped.', checkAt: null }
+            checkAt = null
+            return { monitorRunning, checkAt }
           }
           await stopMonitor()
           monitorRunning = false
-          return { status: 'Monitor stopped.', checkAt: null }
+          checkAt = null
+          return { monitorRunning, checkAt }
 
         case ACTION.STATUS:
-          return { running: monitorRunning }
+          return { monitorRunning }
 
         default:
           return { error: 'Invalid action. Use ?action=start|stop|status' }
@@ -113,19 +115,19 @@ async function main() {
   })
 
   app.get('/hot-keys', async (req, res) => {
-    let result = {}
+    let monitorResponse = {}
     try {
       if (!monitorRunning) {
-        result = await monitorHandler(ACTION.START)
-        checkAt = result.checkAt
-        return res.json(result)
+        monitorResponse = await monitorHandler(ACTION.START)
+        return res.json(monitorResponse)
       }
       if (Date.now() > checkAt) {
         const hotkeys = await calculateHotKeys()
         if (req.query.mode !== MODE.CONTINUOUS) {
-          result = await monitorHandler(ACTION.STOP) 
+          await monitorHandler(ACTION.STOP) 
         }
-        return res.json({ nodeId: url, hotkeys, ...result })
+        monitorResponse = await monitorHandler(ACTION.STATUS)
+        return res.json({ nodeId: url, hotkeys, ...monitorResponse })
 
       }
       return res.json({ checkAt })
@@ -133,7 +135,7 @@ async function main() {
       res.status(500).json({ error: e.message })
     }
   })
-  
+
   // Setting port to 0 means Express will dynamically find a port
   const port = Number(cfg.server.port || 0)
   const server = app.listen(port, () => {
