@@ -39,4 +39,4 @@ out/
 app/
 packages/
 
-apps/valkey-metrics/data/
+apps/metrics/data/
