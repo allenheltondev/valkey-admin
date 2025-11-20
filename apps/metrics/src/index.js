@@ -133,7 +133,8 @@ async function main() {
       res.status(500).json({ error: e.message })
     }
   })
-
+  
+  // Setting port to 0 means Express will dynamically find a port
   const port = Number(cfg.server.port || 0)
   const server = app.listen(port, () => {
     const assignedPort = server.address().port
