@@ -61,6 +61,10 @@ export const VALKEY = {
     deleteCluster: "deleteCluster",
     setClusterData: "setClusterData",
   } as const),
+  HOTKEYS: makeNamespace( "hotKeys",{
+    hotKeysRequested: "hotKeysRequested",
+    hotKeysFulfilled: "hotKeysFulfilled",
+  }),
 } as const
 
 export const CONNECTED = "Connected"
