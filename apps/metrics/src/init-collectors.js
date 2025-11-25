@@ -5,7 +5,6 @@ import { startCollector } from "./epics/collector-rx.js"
 
 const MONITOR = "monitor"
 const stoppers = {}
-const conn = String(process.env.VALKEY_URL || cfg.valkey.url || "").trim()
 
 const startMonitor = (cfg) => {
   const nd = makeNdjsonWriter({

@@ -1,3 +1,4 @@
+import { type WebSocket } from "ws"
 import { VALKEY } from "../../../../common/src/constants"
 import { withDeps, Deps } from "./utils"
 
@@ -8,63 +9,65 @@ type HotKeysResponse = {
   monitorRunning: boolean
 }
 
+const sendHotKeysFulfilled = (
+  ws: WebSocket,
+  connectionId: string,
+  parsedResponse: HotKeysResponse,
+) => {
+  ws.send(
+    JSON.stringify({
+      type: VALKEY.HOTKEYS.hotKeysFulfilled,
+      payload: {
+        connectionId,
+        parsedResponse,
+      },
+    }),
+  )
+}
+
+const sendHotKeysError = (
+  ws: WebSocket,
+  connectionId: string,
+  error: unknown,
+) => {
+  console.log(error)
+  ws.send(
+    JSON.stringify({
+      type: VALKEY.HOTKEYS.hotKeysError,
+      payload: {
+        connectionId,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    }),
+  )
+}
+
 export const hotKeysRequested = withDeps<Deps, void>(
   async ({ ws, connectionId, metricsServerURIs }) => {
     const metricsServerURI = metricsServerURIs.get(connectionId)
     try {
-      let response = await fetch(`${metricsServerURI}/hot-keys`)
-      let parsedResponse: HotKeysResponse = await response.json() as HotKeysResponse
-      console.log(parsedResponse)
-      if (parsedResponse.checkAt) {
-        const delay = Math.max(parsedResponse.checkAt - Date.now(), 0)
+      const initialResponse = await fetch(`${metricsServerURI}/hot-keys`)
+      const initialParsedResponse: HotKeysResponse = await initialResponse.json() as HotKeysResponse
+      // Initial request starts monitoring and returns when to fetch results (`checkAt`).
+      if (initialParsedResponse.checkAt) {
+        const delay = Math.max(initialParsedResponse.checkAt - Date.now(), 0)
+        // Schedule the follow-up request for when the monitor cycle finishes
         setTimeout(async () => {
           try {
-            response = await fetch(`${metricsServerURI}/hot-keys`)
-            parsedResponse = await response.json() as HotKeysResponse
-            ws.send( 
-              JSON.stringify({
-                type: VALKEY.HOTKEYS.hotKeysFulfilled,
-                payload: {
-                  connectionId,
-                  parsedResponse,
-                },
-              }),
-            )
+            const dataResponse = await fetch(`${metricsServerURI}/hot-keys`)
+            const dataParsedResponse = await dataResponse.json() as HotKeysResponse
+            sendHotKeysFulfilled(ws, connectionId, dataParsedResponse)
           } catch (error) {
-            console.log(error)
-            ws.send(
-              JSON.stringify({
-                type: VALKEY.HOTKEYS.hotKeysError,
-                payload: {
-                  connectionId,
-                  error,
-                },
-              }),
-            )
+            sendHotKeysError(ws, connectionId, error)
           }
         }, delay)
       }
+      //
       else {
-        ws.send( 
-          JSON.stringify({
-            type: VALKEY.HOTKEYS.hotKeysFulfilled,
-            payload: {
-              connectionId,
-              parsedResponse,
-            },
-          }),
-        )
+        sendHotKeysFulfilled(ws, connectionId, initialParsedResponse)
       }
     } catch (error) {
-      ws.send(
-        JSON.stringify({
-          type: VALKEY.HOTKEYS.hotKeysError,
-          payload: {
-            connectionId,
-            error,
-          },
-        }),
-      )
+      sendHotKeysError(ws, connectionId, error)
     }
   },
 )

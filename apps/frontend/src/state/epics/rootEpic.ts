@@ -5,6 +5,7 @@ import {
   sendRequestEpic, 
   setDataEpic, 
   deleteConnectionEpic, 
+  updateConnectionDetailsEpic,
   autoReconnectEpic, 
   valkeyRetryEpic, 
   getHotKeysEpic 
