@@ -7,7 +7,7 @@ import {
   Cog,
   CircleQuestionMark,
   Github,
-  Compass,
+  KeyRound,
   Network,
   Activity
 } from "lucide-react"
@@ -59,7 +59,7 @@ export function AppSidebar() {
                   {
                     to: (clusterId ? `/${clusterId}/${id}/browse` : `/${id}/browse`),
                     title: "Key Browser",
-                    icon: Compass,
+                    icon: KeyRound,
                   },
                   {
                     to: (clusterId ? `/${clusterId}/${id}/monitoring` : `/${id}/monitoring`),
