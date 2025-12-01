@@ -104,3 +104,10 @@ export const retryDelay = (retryCount: number): number => {
   return Math.min(delay, RETRY_CONFIG.MAX_DELAY)
 }
 
+export const VALKEY_CLIENT = {
+  SCAN: makeNamespace("scan", {
+    defaultPayloadPattern: "*",
+    defaultCount: "50",
+  } as const),
+}
+

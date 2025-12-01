@@ -1,7 +1,7 @@
 import { WebSocket } from "ws"
 import { GlideClient, GlideClusterClient, Batch, ClusterBatch, RouteOption, SingleNodeRoute } from "@valkey/valkey-glide"
 import * as R from "ramda"
-import { VALKEY } from "../../../common/src/constants.ts"
+import { VALKEY, VALKEY_CLIENT } from "../../../common/src/constants.ts"
 
 interface EnrichedKeyInfo {
   name: string;
@@ -82,7 +82,7 @@ export async function getKeyInfo(
   }
 }
 
-async function scanNode(
+async function scanStandalone(
   client: GlideClient,
   payload: {
     connectionId: string;
@@ -90,8 +90,9 @@ async function scanNode(
     count?: number;
   }, 
 ): Promise<Set<string>> {
-  const pattern = payload.pattern || "*"
-  const count = payload.count || 50 // this is JUST A HINT. may return larger than count https://valkey.io/commands/scan/
+  const pattern = payload.pattern || VALKEY_CLIENT.SCAN.defaultPayloadPattern
+  // count is JUST A HINT. may return larger than count https://valkey.io/commands/scan/
+  const count = payload.count || VALKEY_CLIENT.SCAN.defaultCount
   const allKeys = new Set<string>()
     
   let cursor = "0"
@@ -128,8 +129,9 @@ async function scanCluster(
     count?: number;
   }, 
 ): Promise<Set<string>> {
-  const pattern = payload.pattern || "*"
-  const count = payload.count || 50 // this is JUST A HINT. may return larger than count https://valkey.io/commands/scan/
+  const pattern = payload.pattern || VALKEY_CLIENT.SCAN.defaultPayloadPattern
+  // count is JUST A HINT. may return larger than count https://valkey.io/commands/scan/
+  const count = payload.count || VALKEY_CLIENT.SCAN.defaultCount
   const routeOption: RouteOption = { route: "allPrimaries" } // Sends command to all primary nodes
   const allKeys = new Set<string>()
     
@@ -192,7 +194,7 @@ export async function getKeys(
   },
 ) {
   try {
-    const allKeys = client instanceof GlideClusterClient ? await scanCluster(client, payload) : await scanNode(client, payload)
+    const allKeys = client instanceof GlideClusterClient ? await scanCluster(client, payload) : await scanStandalone(client, payload)
 
     const batchSize = 10 // TO DO: configurable batch size
 
