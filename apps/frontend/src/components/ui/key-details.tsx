@@ -46,10 +46,10 @@ interface keyDetailsProps {
   selectedKey: string | null;
   setSelectedKey: (key: string | null) => void;
   selectedKeyInfo: KeyInfo | null;
-  conectionId: string;
+  connectionId: string;
 }
 
-export default function KeyDetails({ selectedKey, selectedKeyInfo, conectionId, setSelectedKey }: keyDetailsProps) {
+export default function KeyDetails({ selectedKey, selectedKeyInfo, connectionId, setSelectedKey }: keyDetailsProps) {
   const dispatch = useAppDispatch()
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
@@ -58,7 +58,7 @@ export default function KeyDetails({ selectedKey, selectedKeyInfo, conectionId, 
   }
 
   const handleKeyDelete = (keyName: string) => {
-    dispatch(deleteKeyRequested({ connectionId: conectionId!, key: keyName }))
+    dispatch(deleteKeyRequested({ connectionId: connectionId!, key: keyName }))
     setSelectedKey(null)
     handleDeleteModal()
   }
@@ -121,7 +121,7 @@ export default function KeyDetails({ selectedKey, selectedKeyInfo, conectionId, 
             {/* show different key types */}
             {selectedKeyInfo.type === "string" && (
               <KeyDetailsString
-                connectionId={conectionId}
+                connectionId={connectionId}
                 selectedKey={selectedKey}
                 selectedKeyInfo={selectedKeyInfo}
               />
@@ -129,7 +129,7 @@ export default function KeyDetails({ selectedKey, selectedKeyInfo, conectionId, 
 
             {selectedKeyInfo.type === "hash" && (
               <KeyDetailsHash
-                connectionId={conectionId}
+                connectionId={connectionId}
                 selectedKey={selectedKey}
                 selectedKeyInfo={selectedKeyInfo}
               />
@@ -137,7 +137,7 @@ export default function KeyDetails({ selectedKey, selectedKeyInfo, conectionId, 
 
             {selectedKeyInfo.type === "list" && (
               <KeyDetailsList
-                connectionId={conectionId}
+                connectionId={connectionId}
                 selectedKey={selectedKey}
                 selectedKeyInfo={selectedKeyInfo}
               />
@@ -145,7 +145,7 @@ export default function KeyDetails({ selectedKey, selectedKeyInfo, conectionId, 
 
             {selectedKeyInfo.type === "set" && (
               <KeyDetailsSet
-                connectionId={conectionId}
+                connectionId={connectionId}
                 selectedKey={selectedKey}
                 selectedKeyInfo={selectedKeyInfo}
               />
