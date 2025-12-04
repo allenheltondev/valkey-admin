@@ -6,6 +6,7 @@ import * as Streamer from "./effects/ndjson-streamer.js"
 import { getCollectorMeta, setupCollectors, startMonitor, stopMonitor } from "./init-collectors.js"
 import { calculateHotKeys } from "./analyzers/calculate-hot-keys.js"
 import { MODE, ACTION, MONITOR, SLOWLOG } from "./utils/constants.js"
+import { enrichHotKeys } from "./analyzers/enrich-hot-keys.js"
 
 async function main() {
   const cfg = loadConfig()
@@ -128,9 +129,9 @@ async function main() {
         return res.json(monitorResponse)
       }
       if (Date.now() > checkAt) {
-        const hotKeys = await Streamer.monitor().then(calculateHotKeys)
+        const hotKeys = await Streamer.monitor().then(calculateHotKeys).then(enrichHotKeys(client))
         if (req.query.mode !== MODE.CONTINUOUS) {
-          await monitorHandler(ACTION.STOP) 
+          await monitorHandler(ACTION.STOP)
         }
         monitorResponse = await monitorHandler(ACTION.STATUS)
         return res.json({ hotKeys, ...monitorResponse })
