@@ -3,24 +3,30 @@ import { useSelector } from "react-redux"
 import { Activity, RefreshCcw } from "lucide-react"
 import { useParams } from "react-router"
 import { COMMANDLOG_TYPE } from "@common/src/constants"
+import * as R from "ramda"
 import { AppHeader } from "./ui/app-header"
 import { HotKeys } from "./ui/hot-keys"
 import { SlowLogs } from "./ui/slow-logs"
+import KeyDetails from "./ui/key-details"
 import type { RootState } from "@/store"
 import { commandLogsRequested, selectCommandLogs } from "@/state/valkey-features/commandlogs/commandLogsSlice"
 import { useAppDispatch } from "@/hooks/hooks"
 import { hotKeysRequested, selectHotKeys, selectHotKeysStatus } from "@/state/valkey-features/hotkeys/hotKeysSlice"
+import { getKeyTypeRequested } from "@/state/valkey-features/keys/keyBrowserSlice"
+import { selectKeys } from "@/state/valkey-features/keys/keyBrowserSelectors"
 
-type TabType = "hot-keys" | "large-keys" | "command-logs"
+type TabType = "hot-keys" | "command-logs"
 
 export const Monitoring = () => {
   const dispatch = useAppDispatch()
   const { id } = useParams()
   const [activeTab, setActiveTab] = useState<TabType>("hot-keys")
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
   const commandLogsSlowData = useSelector((state: RootState) => selectCommandLogs(id!, COMMANDLOG_TYPE.SLOW)(state))
   const hotKeysData = useSelector((state: RootState) => selectHotKeys(id!)(state))
   const hotKeysStatus = useSelector((state: RootState) => selectHotKeysStatus(id!)(state))
+  const keys: KeyInfo[] = useSelector(selectKeys(id!))
 
   useEffect(() => {
     if (id) {
@@ -35,9 +41,21 @@ export const Monitoring = () => {
     }
   }
 
+  const handleKeyClick = (keyName: string) => {
+    setSelectedKey(keyName)
+
+    const keyInfo = keys.find((k) => k.name === keyName)
+    if (R.isNotEmpty(keyInfo) && !keyInfo!.type) {
+      dispatch(getKeyTypeRequested({ connectionId: id!, key: keyName }))
+    }
+  }
+
+  const selectedKeyInfo = selectedKey
+    ? keys.find((k) => k.name === selectedKey)
+    : null
+
   const tabs = [
     { id: "hot-keys" as TabType, label: "Hot Keys" },
-    { id: "large-keys" as TabType, label: "Large Keys" },
     { id: "command-logs" as TabType, label: "Command Logs" },
   ]
 
@@ -81,22 +99,35 @@ export const Monitoring = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 border dark:border-tw-dark-border rounded overflow-y-auto">
-        {activeTab === "hot-keys" && (
-          <HotKeys data={hotKeysData} status={hotKeysStatus} />
-        )}
-        {activeTab === "large-keys" && (
-          <div className="h-full flex items-center justify-center">
-            <span className="text-lg text-gray-500 dark:text-white mb-2">
-              No Large Keys Found
-            </span>
+      {activeTab === "hot-keys" ? (
+        <div className="flex flex-1 min-h-0">
+          {/* Hot Keys List */}
+          <div className={selectedKey ? "w-2/3 pr-2" : "w-full"}>
+            <div className="h-full border dark:border-tw-dark-border rounded overflow-y-auto">
+              <HotKeys
+                data={hotKeysData}
+                onKeyClick={handleKeyClick}
+                selectedKey={selectedKey}
+                status={hotKeysStatus}
+              />
+            </div>
           </div>
-        )}
-
-        {activeTab === "command-logs" && (
-          <SlowLogs data={commandLogsSlowData}/>
-        )}
-      </div>
+          {/* Key Details Panel */}
+          {selectedKey && (
+            <KeyDetails
+              connectionId={id!}
+              readOnly={true}
+              selectedKey={selectedKey}
+              selectedKeyInfo={selectedKeyInfo}
+              setSelectedKey={setSelectedKey}
+            />
+          )}
+        </div>
+      ) : (
+        <div className="flex-1 border dark:border-tw-dark-border rounded overflow-y-auto">
+          <SlowLogs data={commandLogsSlowData} />
+        </div>
+      )}
     </div>
 
   )

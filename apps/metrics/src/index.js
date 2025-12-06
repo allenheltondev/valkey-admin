@@ -8,6 +8,7 @@ import { calculateHotKeys } from "./analyzers/calculateHotKeys.js"
 import { MODE, ACTION, MONITOR } from "./utils/constants.js"
 import { getCommandLogs } from "./handlers/commandlog-handler.js"
 import { monitorHandler } from "./handlers/monitor-handler.js"
+import { enrichHotKeys } from "./analyzers/enrich-hot-keys.js"
 
 async function main() {
   const cfg = loadConfig()
@@ -80,13 +81,12 @@ async function main() {
         return res.json(monitorResponse)
       }
       if (Date.now() > checkAt) {
-        const hotKeys = await calculateHotKeys()
+        const hotKeys = await Streamer.monitor().then(calculateHotKeys).then(enrichHotKeys(client))
         if (req.query.mode !== MODE.CONTINUOUS) {
           await monitorHandler(ACTION.STOP, cfg) 
         }
         monitorResponse = await monitorHandler(ACTION.STATUS, cfg)
         return res.json({ hotKeys, ...monitorResponse })
-
       }
       return res.json({ checkAt })
     } catch (e) {
