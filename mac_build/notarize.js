@@ -18,7 +18,7 @@ exports.default = async function notarizing(context) {
 
   if (process.env.SKIP_NOTARIZE === "true") {
     console.log("  • ⚠️ SKIP_NOTARIZE=true detected. Skipping notarization step.")
-    return;
+    return
   }
 
   const { electronPlatformName, appOutDir } = context
