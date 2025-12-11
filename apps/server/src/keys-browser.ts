@@ -154,8 +154,6 @@ async function scanCluster(
         nodeRouteOption,
       )) as [string, string[]]
 
-      console.log("SCAN node response:", scanResult)
-
       cursor = scanResult[0]
       scanResult[1].forEach((key) => {allKeys.add(key)})
     }

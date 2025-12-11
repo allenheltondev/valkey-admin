@@ -1,8 +1,8 @@
 import { getCollectorMeta } from "../init-collectors.js"
 import { ACTION, MONITOR, MODE } from "../utils/constants.js"
-import { calculateHotKeysFromMonitor } from "./analyzers/calculate-hot-keys.js"
+import { calculateHotKeysFromMonitor } from "../analyzers/calculate-hot-keys.js"
 import { startMonitor, stopMonitor } from "../init-collectors.js"
-import { enrichHotKeys } from "./analyzers/enrich-hot-keys.js"
+import { enrichHotKeys } from "../analyzers/enrich-hot-keys.js"
 
 const readMonitorMetadata = () => getCollectorMeta(MONITOR)
 const toResponse = ({ isRunning, willCompleteAt }) => ({
@@ -32,7 +32,7 @@ export const useMonitor = async (req, res) => {
   }
 }
 
-const monitorHandler = async (action, cfg) => {
+export const monitorHandler = async (action, cfg) => {
   try {
     const meta = readMonitorMetadata()
 

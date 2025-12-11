@@ -16,11 +16,7 @@ async function main() {
 
   const I = R.range(1, 6)
 
-  // clean up
-  await Promise.all(
-    ["geo", "list", "set" ,"hash", "zset", "bitmap", "stream", ...I.map(i => `string:${i}`)].map(k => cluster.del(k))
-  )
-
+  // --- keep your existing keys ---
   const geoPoints = [
     { member: "London",  longitude: -0.1278, latitude:  51.5074 },
     { member: "Paris",   longitude:  2.3522, latitude:  48.8566 },
@@ -39,13 +35,32 @@ async function main() {
     ...I.map(i => cluster.setBit("bitmap", i, 1)),
   ])
 
-  // streams gotta be sequential
   for (let i = 1; i <= 5; i++) {
     await cluster.xAdd("stream", "*", { sensor: `${1000 + i}`, value: `${20 + i}` })
-    await sleep(50) // sleep here is to make each xAdd get a unique, increasing timestamp
+    await sleep(50)
   }
 
-  console.log("Loaded entries for all Valkey data types.")
+  console.log("Loaded initial entries for all Valkey data types.")
+
+  // --- add 35,000 string keys ---
+  const TOTAL_KEYS = 35000
+  const BATCH_SIZE = 1000
+
+  console.log(`Adding ${TOTAL_KEYS} additional string keys in batches of ${BATCH_SIZE}...`)
+
+  for (let start = 1; start <= TOTAL_KEYS; start += BATCH_SIZE) {
+    const batchEnd = Math.min(start + BATCH_SIZE - 1, TOTAL_KEYS)
+    const promises = []
+
+    for (let i = start; i <= batchEnd; i++) {
+      promises.push(cluster.set(`bulk:key:${i}`, `value_${i}`))
+    }
+
+    await Promise.all(promises)
+    console.log(`Created keys ${start} → ${batchEnd}`)
+  }
+
+  console.log("All 35,000 additional string keys created successfully.")
   await cluster.quit()
 }
 
