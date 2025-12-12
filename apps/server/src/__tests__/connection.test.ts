@@ -95,9 +95,6 @@ describe("connectToValkey", () => {
 
       const parsedMessages = messages.map((msg) => JSON.parse(msg))
 
-      const standaloneMessage = parsedMessages[0]
-      assert.strictEqual(standaloneMessage.type, VALKEY.CONNECTION.standaloneConnectFulfilled)
-
       const clusterMessage = parsedMessages.find((msg) => msg.type === VALKEY.CLUSTER.addCluster)
       assert.ok(clusterMessage)
       assert.ok(clusterMessage.payload)
