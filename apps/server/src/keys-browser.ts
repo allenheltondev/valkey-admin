@@ -103,7 +103,7 @@ async function scanStandalone(
 
     cursor = newCursor
     keys.forEach((key) => {allKeys.add(key)})
-  } while (allKeys.size < 1000 || cursor === "0")
+  } while (allKeys.size < 1000 && cursor !== "0")
 
   return allKeys
 }
