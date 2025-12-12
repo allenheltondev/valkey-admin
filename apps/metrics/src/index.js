@@ -6,7 +6,7 @@ import * as Streamer from "./effects/ndjson-streamer.js"
 import { setupCollectors } from "./init-collectors.js"
 import { getCommandLogs } from "./handlers/commandlog-handler.js"
 import { monitorHandler, useMonitor } from "./handlers/monitor-handler.js"
-import { belongsToCluster, evictionPolicyIsLFU } from "./handlers/lfu-hotkeys-handler.js"
+import { belongsToCluster, isEvictionPolicyLFU } from "./handlers/lfu-hotkeys-handler.js"
 import { calculateHotKeysFromHotSlots } from "./analyzers/calculate-hot-keys.js"
 
 async function main() {
@@ -71,7 +71,7 @@ async function main() {
   })
 
   app.get("/hot-keys", async (req, res) => {
-    if (evictionPolicyIsLFU(client) && belongsToCluster(client)){
+    if (isEvictionPolicyLFU(client) && belongsToCluster(client)){
       const hotKeys = await calculateHotKeysFromHotSlots(client, req.query.count)
       return res.json(hotKeys)
     } 

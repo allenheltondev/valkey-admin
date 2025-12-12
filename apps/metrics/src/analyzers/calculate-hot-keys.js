@@ -26,7 +26,21 @@ export const calculateHotKeysFromHotSlots = async (client, count = 50) => {
   const hotSlots = await getHotSlots(client)
 
   const slotPromises = hotSlots.map(async (slot) => {
-    const [, keys] = await client.sendCommand(["SCAN", slot["slotId"].toString(), "COUNT", "1"])
+    //console.log("Slot is: ", slot)
+    const slotId = slot["slotId"]
+    const keys = []
+    let cursor = slotId
+    let cursorToSlot = slotId
+
+    do {
+      //console.log("Cursor is: ", cursor)
+      const [nextCursor, scannedKeys] = await client.sendCommand(["SCAN", cursor.toString(), "COUNT", "1"])
+      cursor = nextCursor
+      keys.push(...scannedKeys)
+      cursorToSlot = Number(cursor) & 0x3FFF
+
+    } while (cursorToSlot === slotId && cursor !== 0)
+    
     return keys.map( async (key) => {
       const freq = parseInt(await client.sendCommand(["OBJECT", "FREQ", key]))
       return { key, freq }
@@ -39,7 +53,8 @@ export const calculateHotKeysFromHotSlots = async (client, count = 50) => {
 
   const heap = new Heap((a, b) => a.freq - b.freq)
   for (const { key, freq } of allKeyFreqs) {
-    if (heap.size() < count && freq > 0 ){
+    if (freq <= 1) continue
+    if (heap.size() < count){
       heap.push({ key, freq })
     }
     else if ( freq > heap.peek().freq) {

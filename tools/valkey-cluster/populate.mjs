@@ -3,6 +3,9 @@ import { createCluster } from "@valkey/client"
 import { setTimeout as sleep } from "timers/promises"
 
 async function main() {
+  const TOTAL_KEYS = 100000
+  const BATCH_SIZE = 1000
+
   const startup = process.env.VALKEY_START_NODE || "valkey-node-0:6379"
   const [host, portStr] = startup.split(":")
   const port = Number(portStr)
@@ -35,16 +38,14 @@ async function main() {
     ...I.map(i => cluster.setBit("bitmap", i, 1)),
   ])
 
+  // streams gotta be sequential
   for (let i = 1; i <= 5; i++) {
     await cluster.xAdd("stream", "*", { sensor: `${1000 + i}`, value: `${20 + i}` })
-    await sleep(50)
+    await sleep(50) // sleep here is to make each xAdd get a unique, increasing timestamp
+
   }
 
   console.log("Loaded initial entries for all Valkey data types.")
-
-  // --- add 35,000 string keys ---
-  const TOTAL_KEYS = 35000
-  const BATCH_SIZE = 1000
 
   console.log(`Adding ${TOTAL_KEYS} additional string keys in batches of ${BATCH_SIZE}...`)
 
@@ -60,7 +61,7 @@ async function main() {
     console.log(`Created keys ${start} → ${batchEnd}`)
   }
 
-  console.log("All 35,000 additional string keys created successfully.")
+  console.log("All additional string keys created successfully.")
   await cluster.quit()
 }
 
