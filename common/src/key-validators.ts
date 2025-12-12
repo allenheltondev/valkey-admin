@@ -6,6 +6,8 @@ interface ValidationData {
   hashFields?: Array<{ field: string; value: string }>
   listFields?: string[]
   setFields?: string[]
+  zsetFields?: Array<{ key: string; value: string }>
+  streamFields?: Array<{ field: string; value: string }>
 }
 
 interface ValidationRule {
@@ -72,6 +74,35 @@ export const SetSpec: ValidationRule[] = [
   },
 ]
 
+export const ZSetSpec: ValidationRule[] = [
+  ...BaseSpec,
+  {
+    validatorFn: (key) => key.keyType === "ZSet" &&
+      (!key.zsetFields || key.zsetFields.filter((field) =>
+        isNotBlank(field.key) && isNotBlank(field.value),
+      ).length === 0),
+    error: "At least one key-value (member-score) pair is required for zset type",
+  },
+  {
+    validatorFn: (key) => key.keyType === "ZSet" && key.zsetFields ?
+      key.zsetFields.some((field) =>
+        isNotBlank(field.key) && isNotBlank(field.value) && isNaN(parseFloat(field.value))
+      ) : false,
+    error: "All score values must be valid numbers for zset type",
+  },
+]
+
+export const StreamSpec: ValidationRule[] = [
+  ...BaseSpec,
+  {
+    validatorFn: (key) => key.keyType === "Stream" &&
+      (!key.streamFields || key.streamFields.filter((field) =>
+        isNotBlank(field.field) && isNotBlank(field.value),
+      ).length === 0),
+    error: "At least one field-value pair is required for stream type",
+  },
+]
+
 export const validate = (spec: ValidationRule[]) => (key: ValidationData): string =>
   spec
     .filter(({ validatorFn }) => validatorFn(key))
@@ -84,6 +115,8 @@ export const validators = {
   "Hash": validate(HashSpec),
   "List": validate(ListSpec),
   "Set": validate(SetSpec),
+  "ZSet": validate(ZSetSpec),
+  "Stream": validate(StreamSpec),
   "undefined": () => "Key type is required",
   "Select key type": () => "Please select a key type",
 }

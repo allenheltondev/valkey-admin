@@ -23,7 +23,7 @@ export default function KeyDetailsStream(
       {selectedKeyInfo?.elements.map((entry, index: number) => (
         <div className="overflow-hidden" key={index}>
           <div className="bg-tw-dark-border opacity-85 text-white py-2 px-4 font-semibold">
-            Entry ID: {entry.key} <span className="text-xs font-light">({new Date(1765207648389).toLocaleString()})</span>
+            Entry ID: {entry.key} <span className="text-xs font-light">({new Date(Number(entry.key.split("-")[0])).toLocaleString()})</span>
           </div>
           <table className="table-auto w-full">
             <thead className="bg-tw-dark-border opacity-70 text-white">

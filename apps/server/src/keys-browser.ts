@@ -386,6 +386,43 @@ async function addSetKey(
 
 }
 
+async function addZSetKey(
+  client: GlideClient | GlideClusterClient,
+  key: string,
+  members: { key: string; value: number }[],
+  ttl?: number,
+) {
+  const zaddArgs = ["ZADD", key]
+  members.forEach(({ key: member, value: score }) => {
+    zaddArgs.push(score.toString(), member)
+  })
+
+  await client.customCommand(zaddArgs)
+
+  if (ttl && ttl > 0) {
+    await client.customCommand(["EXPIRE", key, ttl.toString()])
+  }
+}
+
+async function addStreamKey(
+  client: GlideClient | GlideClusterClient,
+  key: string,
+  fields: { field: string; value: string }[],
+  entryId?: string,
+  ttl?: number,
+) {
+  const xaddArgs = ["XADD", key, entryId && entryId.trim() ? entryId.trim() : "*"]
+  fields.forEach(({ field, value }) => {
+    xaddArgs.push(field, value)
+  })
+
+  await client.customCommand(xaddArgs)
+
+  if (ttl && ttl > 0) {
+    await client.customCommand(["EXPIRE", key, ttl.toString()])
+  }
+}
+
 export async function addKey(
   client: GlideClient | GlideClusterClient,
   ws: WebSocket,
@@ -394,8 +431,10 @@ export async function addKey(
     key: string;
     keyType: string;
     value?: string; // for string type
-    fields?: { field: string; value: string }[]; // for hash type
-    values?: string[]; // for list, set, zset types
+    fields?: { field: string; value: string }[]; // for hash and stream types
+    values?: string[]; // for list, set types
+    zsetMembers?: { key: string; value: number }[]; // for zset type
+    streamEntryId?: string; // for stream type
     ttl?: number;
   },
 ) {
@@ -417,7 +456,6 @@ export async function addKey(
         await addHashKey(client, payload.key, payload.fields, payload.ttl)
         break
 
-      // to do: implement other types here
       case "list":
         if (!payload.values || payload.values.length === 0) {
           throw new Error("At least one value is required for list type")
@@ -429,6 +467,18 @@ export async function addKey(
           throw new Error("At least one value is required for set type")
         }
         await addSetKey(client, payload.key, payload.values, payload.ttl)
+        break
+      case "zset":
+        if (!payload.zsetMembers || payload.zsetMembers.length === 0) {
+          throw new Error("At least one member is required for zset type")
+        }
+        await addZSetKey(client, payload.key, payload.zsetMembers, payload.ttl)
+        break
+      case "stream":
+        if (!payload.fields || payload.fields.length === 0) {
+          throw new Error("At least one field is required for stream type")
+        }
+        await addStreamKey(client, payload.key, payload.fields, payload.streamEntryId, payload.ttl)
         break
 
       default:
@@ -580,6 +630,41 @@ async function updateSetKey(
   }
 }
 
+async function updateZSetKey(
+  client: GlideClient | GlideClusterClient,
+  key: string,
+  updates: { member: string; score: number }[],
+  ttl?: number,
+) {
+  if (client instanceof GlideClient) {
+    const batch = new Batch(true)
+
+    for (const { member, score } of updates) {
+      batch.customCommand(["ZADD", key, score.toString(), member])
+    }
+
+    if (ttl && ttl > 0) {
+      batch.customCommand(["EXPIRE", key, ttl.toString()])
+    }
+
+    await client.exec(batch, true)
+  } else if (client instanceof GlideClusterClient) {
+    const batch = new ClusterBatch(true)
+
+    for (const { member, score } of updates) {
+      batch.customCommand(["ZADD", key, score.toString(), member])
+    }
+
+    if (ttl && ttl > 0) {
+      batch.customCommand(["EXPIRE", key, ttl.toString()])
+    }
+
+    await client.exec(batch, true)
+  } else {
+    throw new Error("Unsupported client type")
+  }
+}
+
 export async function updateKey(
   client: GlideClient | GlideClusterClient,
   ws: WebSocket,
@@ -591,6 +676,7 @@ export async function updateKey(
     fields?: { field: string; value: string }[]; // for hash type
     listUpdates?: { index: number; value: string }[]; // for list type
     setUpdates?: { oldValue: string; newValue: string }[]; // for set type
+    zsetUpdates?: { member: string; score: number }[]; // for zset type
     ttl?: number;
   },
 ) {
@@ -623,6 +709,12 @@ export async function updateKey(
           throw new Error("Set updates are required for set type")
         }
         await updateSetKey(client, payload.key, payload.setUpdates, payload.ttl)
+        break
+      case "zset":
+        if (!payload.zsetUpdates || payload.zsetUpdates.length === 0) {
+          throw new Error("Zset updates are required for zset type")
+        }
+        await updateZSetKey(client, payload.key, payload.zsetUpdates, payload.ttl)
         break
 
       default:

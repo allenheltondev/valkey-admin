@@ -1,3 +1,10 @@
+import { useState } from "react"
+import { Check, Pencil, X } from "lucide-react"
+import { CustomTooltip } from "./custom-tooltip"
+import { Button } from "./button"
+import { useAppDispatch } from "@/hooks/hooks"
+import { updateKeyRequested } from "@/state/valkey-features/keys/keyBrowserSlice"
+
 interface ZSetElement {
   key: string;
   value: number;
@@ -18,10 +25,53 @@ interface KeyDetailsZSetProps {
 }
 
 export default function KeyDetailsZSet(
-  { selectedKeyInfo }: KeyDetailsZSetProps,
+  { selectedKey, selectedKeyInfo, connectionId, readOnly = false }: KeyDetailsZSetProps,
 ) {
+  const dispatch = useAppDispatch()
+  const [isEditable, setIsEditable] = useState(false)
+  const [editedValues, setEditedValues] = useState<number[]>([])
 
   console.log("selectedKeyInfo:::", selectedKeyInfo)
+
+  const handleEdit = () => {
+    if (isEditable) {
+      // Cancel edit
+      setIsEditable(false)
+      setEditedValues([])
+    } else {
+      // Start editing - initialize with current values
+      setEditedValues(selectedKeyInfo.elements.map((el) => el.value))
+      setIsEditable(true)
+    }
+  }
+
+  const handleSave = () => {
+    // Create zsetUpdates array with key and value pairs for changed scores
+    const zsetUpdates = editedValues
+      .map((newScore, index) => ({
+        member: selectedKeyInfo.elements[index].key,
+        score: newScore,
+      }))
+      .filter((update, index) => update.score !== selectedKeyInfo.elements[index].value)
+
+    dispatch(updateKeyRequested({
+      connectionId: connectionId,
+      key: selectedKey,
+      keyType: "zset",
+      zsetUpdates,
+    }))
+    setIsEditable(false)
+    setEditedValues([])
+  }
+
+  const handleValueChange = (index: number, newValue: string) => {
+    setEditedValues((prev) => {
+      const updatedValues = [...prev]
+      updatedValues[index] = parseFloat(newValue) || 0
+      return updatedValues
+    })
+  }
+
   return (
     <div className="flex items-center justify-center w-full p-4">
       <table className="table-auto w-full overflow-hidden">
@@ -33,17 +83,62 @@ export default function KeyDetailsZSet(
             <th className="w-3/4 py-3 px-4 text-left font-semibold">
               Value
             </th>
+            <th className="">
+              {!readOnly && (isEditable ? (
+                <div className="flex gap-1">
+                  <CustomTooltip content="Save">
+                    <Button
+                      className="text-tw-primary hover:text-tw-primary"
+                      onClick={handleSave}
+                      variant={"secondary"}
+                    >
+                      <Check />
+                    </Button>
+                  </CustomTooltip>
+                  <CustomTooltip content="Cancel">
+                    <Button
+                      onClick={handleEdit}
+                      variant={"destructiveGhost"}
+                    >
+                      <X />
+                    </Button>
+                  </CustomTooltip>
+                </div>
+              ) : (
+                <CustomTooltip content="Edit">
+                  <Button
+                    className="mr-1"
+                    onClick={handleEdit}
+                    variant={"ghost"}
+                  >
+                    <Pencil />
+                  </Button>
+                </CustomTooltip>
+              ))}
+            </th>
           </tr>
         </thead>
         <tbody>
           {selectedKeyInfo.elements.map((element: ZSetElement, index: number) => (
             <tr key={index}>
               <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
-                {element.value}
-              </td>
-              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
                 {element.key}
               </td>
+              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
+                {isEditable ? (
+                  <input
+                    className="w-full p-2 dark:bg-tw-dark-bg dark:border-tw-dark-border border rounded focus:outline-none
+                                        focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleValueChange(index, e.target.value)}
+                    step="any"
+                    type="number"
+                    value={editedValues[index] !== undefined ? editedValues[index] : element.value}
+                  />
+                ) : (
+                  element.value
+                )}
+              </td>
+              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white"></td>
             </tr>
           ))}
         </tbody>

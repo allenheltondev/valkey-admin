@@ -3,7 +3,7 @@ import { X } from "lucide-react"
 import { useParams } from "react-router"
 import { validators } from "@common/src/key-validators"
 import * as R from "ramda"
-import { HashFields, ListFields, StringFields, SetFields } from "./key-types"
+import { HashFields, ListFields, StringFields, SetFields, ZSetFields, StreamFields } from "./key-types"
 import { useAppDispatch } from "@/hooks/hooks"
 import { addKeyRequested } from "@/state/valkey-features/keys/keyBrowserSlice"
 
@@ -23,6 +23,9 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
   const [hashFields, setHashFields] = useState([{ field: "", value: "" }])
   const [listFields, setListFields] = useState([""])
   const [setFields, setSetFields] = useState([""])
+  const [zsetFields, setZsetFields] = useState([{ key: "", value: "" }])
+  const [streamFields, setStreamFields] = useState([{ field: "", value: "" }])
+  const [streamEntryId, setStreamEntryId] = useState("")
 
   const addHashField = () => {
     setHashFields([...hashFields, { field: "", value: "" }])
@@ -57,6 +60,42 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
     setSetFields(setFields.filter((_, i) => i !== index))
   }
 
+  const addZsetField = () => {
+    setZsetFields([...zsetFields, { key: "", value: "" }])
+  }
+
+  const removeZsetField = (index: number) => {
+    setZsetFields(zsetFields.filter((_, i) => i !== index))
+  }
+
+  const updateZsetField = (
+    index: number,
+    field: "key" | "value",
+    val: string,
+  ) => {
+    const updated = [...zsetFields]
+    updated[index][field] = val
+    setZsetFields(updated)
+  }
+
+  const addStreamField = () => {
+    setStreamFields([...streamFields, { field: "", value: "" }])
+  }
+
+  const removeStreamField = (index: number) => {
+    setStreamFields(streamFields.filter((_, i) => i !== index))
+  }
+
+  const updateStreamField = (
+    index: number,
+    field: "field" | "value",
+    val: string,
+  ) => {
+    const updated = [...streamFields]
+    updated[index][field] = val
+    setStreamFields(updated)
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -71,6 +110,8 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
       hashFields: keyType === "Hash" ? hashFields : undefined,
       listFields: keyType === "List" ? listFields : undefined,
       setFields: keyType === "Set" ? setFields : undefined,
+      zsetFields: keyType === "ZSet" ? zsetFields : undefined,
+      streamFields: keyType === "Stream" ? streamFields : undefined,
     }
 
     const validator = validators[keyType as keyof typeof validators] || validators["undefined"]
@@ -137,6 +178,37 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
             values: validFields,
           }),
         )
+      } else if (keyType === "ZSet") {
+        // before dispatching, filtering out the empty fields and converting scores to numbers
+        const validMembers = zsetFields
+          .filter((field) => field.key.trim() && field.value.trim())
+          .map((field) => ({
+            key: field.key.trim(),
+            value: parseFloat(field.value),
+          }))
+
+        dispatch(
+          addKeyRequested({
+            ...basePayload,
+            zsetMembers: validMembers,
+          }),
+        )
+      } else if (keyType === "Stream") {
+        // before dispatching, filtering out the empty fields
+        const validFields = streamFields
+          .filter((field) => field.field.trim() && field.value.trim())
+          .map((field) => ({
+            field: field.field.trim(),
+            value: field.value.trim(),
+          }))
+
+        dispatch(
+          addKeyRequested({
+            ...basePayload,
+            fields: validFields,
+            streamEntryId: streamEntryId.trim() || undefined,
+          }),
+        )
       }
 
       onClose()
@@ -172,6 +244,8 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
                     <option>Hash</option>
                     <option>List</option>
                     <option>Set</option>
+                    <option>ZSet</option>
+                    <option>Stream</option>
                   </select>
                 </div>
               </div>
@@ -226,6 +300,22 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
                 onRemove={removeSetField}
                 setFields={setFields}
                 setSetFields={setSetFields}
+              />
+            ) : keyType === "ZSet" ? (
+              <ZSetFields
+                onAdd={addZsetField}
+                onRemove={removeZsetField}
+                onUpdate={updateZsetField}
+                zsetFields={zsetFields}
+              />
+            ) : keyType === "Stream" ? (
+              <StreamFields
+                onAdd={addStreamField}
+                onEntryIdChange={setStreamEntryId}
+                onRemove={removeStreamField}
+                onUpdate={updateStreamField}
+                streamEntryId={streamEntryId}
+                streamFields={streamFields}
               />
             ) : (
               <div className="mt-2 text-sm font-light">Select a key type</div>

@@ -177,6 +177,8 @@ const keyBrowserSlice = createSlice({
         value?: string;
         fields?: { field: string; value: string }[];
         values?: string[];
+        zsetMembers?: { key: string; value: number }[];
+        streamEntryId?: string;
         ttl?: number;
       }>,
     ) => {
@@ -224,6 +226,7 @@ const keyBrowserSlice = createSlice({
         fields?: { field: string; value: string }[];
         listUpdates?: { index: number; value: string }[];
         setUpdates?: { oldValue: string; newValue: string }[];
+        zsetUpdates?: { key: string; value: number }[];
         ttl?: number;
       }>,
     ) => {

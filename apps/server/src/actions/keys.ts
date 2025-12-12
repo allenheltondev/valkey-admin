@@ -91,6 +91,8 @@ interface AddKeyRequestedPayload extends KeyPayload {
     value: string;
   }[] | undefined;
   values?: string[] | undefined;
+  zsetMembers?: { key: string; value: number }[] | undefined;
+  streamEntryId?: string | undefined;
   ttl?: number | undefined;
 }
 
