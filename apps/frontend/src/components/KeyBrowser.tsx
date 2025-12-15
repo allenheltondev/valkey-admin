@@ -58,6 +58,7 @@ export function KeyBrowser() {
     { value: "set", label: "Set" },
     { value: "zset", label: "Zset" },
     { value: "stream", label: "Stream" },
+    { value: "rejson-rl", label: "ReJSON-RL" },
   ]
 
   const handleSearch = (e: React.FormEvent) => {
