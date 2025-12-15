@@ -13,6 +13,7 @@ interface ConnectionDetails {
   alias?: string;
   role?: Role;
   clusterId?: string;
+  // Eviction policy required for getting hot keys using hot slots
   lfuEnabled?: boolean;
 }
 
