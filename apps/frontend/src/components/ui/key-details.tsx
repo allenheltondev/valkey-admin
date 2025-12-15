@@ -109,7 +109,7 @@ export default function KeyDetails({ selectedKey, selectedKeyInfo, connectionId,
                 )}
                 <CustomTooltip content="Type">
                   <span className={`text-xs px-2 py-1 rounded-full ${readOnly ? "" : "border-2 border-tw-primary"} text-tw-primary dark:text-white`}>
-                    {selectedKeyInfo.type}
+                    {selectedKeyInfo.type === "ReJSON-RL" ? "json" : selectedKeyInfo.type}
                   </span>
                 </CustomTooltip>
                 {!readOnly && (<CustomTooltip content="Size">

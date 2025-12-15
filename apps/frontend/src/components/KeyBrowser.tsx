@@ -58,7 +58,7 @@ export function KeyBrowser() {
     { value: "set", label: "Set" },
     { value: "zset", label: "Zset" },
     { value: "stream", label: "Stream" },
-    { value: "rejson-rl", label: "ReJSON-RL" },
+    { value: "rejson-rl", label: "JSON" },
   ]
 
   const handleSearch = (e: React.FormEvent) => {
@@ -225,8 +225,8 @@ export function KeyBrowser() {
                         <span className="flex items-center gap-2">
                           <Key size={16} /> {keyInfo.name}
                         </span>
-                        <div className={`ml-6 text-xs font-light text-tw-primary ${selectedKey === keyInfo.name ? "text-white" : ""}`}>
-                          {R.toUpper(keyInfo.type)}
+                        <div className={`ml-6 text-xs font-light uppercase text-tw-primary ${selectedKey === keyInfo.name ? "text-white" : ""}`}>
+                          {keyInfo.type === "ReJSON-RL" ? "json" : keyInfo.type}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 text-xs">
