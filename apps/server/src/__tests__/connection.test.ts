@@ -3,6 +3,7 @@ import { describe, it, mock, beforeEach } from "node:test"
 import assert from "node:assert"
 import { GlideClient, GlideClusterClient } from "@valkey/valkey-glide"
 import { connectToValkey } from "../connection.ts"
+import { checkJsonModuleAvailability } from "../check-json-module.ts"
 import { VALKEY } from "../../../../common/src/constants.ts"
 
 describe("connectToValkey", () => {
@@ -62,6 +63,7 @@ describe("connectToValkey", () => {
         host: "127.0.0.1",
         port: 6379,
         lfuEnabled: true,
+        jsonModuleAvailable: false,
       })
     } finally {
       GlideClient.createClient = originalCreateClient
@@ -222,5 +224,27 @@ describe("connectToValkey", () => {
     } finally {
       GlideClient.createClient = originalCreateClient
     }
+  })
+
+  it("should detect JSON module availability", async () => {
+    const mockClient = {
+      customCommand: mock.fn(async () => [
+        [{ key: "name", value: "json" }, { key: "ver", value: 10002 }]
+      ])
+    }
+
+    const result = await checkJsonModuleAvailability(mockClient as any)
+    assert.strictEqual(result, true)
+  })
+
+  it("should return false when JSON module is not present", async () => {
+    const mockClient = {
+      customCommand: mock.fn(async () => [
+        [{ key: "name", value: "search" }]
+      ])
+    }
+
+    const result = await checkJsonModuleAvailability(mockClient as any)
+    assert.strictEqual(result, false)
   })
 })
