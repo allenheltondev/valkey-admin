@@ -71,6 +71,10 @@ export const VALKEY = {
     commandLogsFulfilled: "commandLogsFulfilled",
     commandLogsError: "commandLogsError",
   }),
+  CONFIG: makeNamespace("config", {
+    setConfig: "setConfig",
+    updateConfig: "updateConfig",
+  }),
 } as const
 
 export const CONNECTED = "Connected"
@@ -125,3 +129,17 @@ export const SORT_FIELD = {
   TIMESTAMP: "timestamp",
   METRIC: "metric",
 } as const
+
+export const KEY_EVICTION_POLICY = {
+  NO_EVICTION: "noeviction",
+  ALLKEYS_LRU: "allkeys-lru",
+  ALLKEYS_LFU: "allkeys-lfu",
+  VOLATILE_LRU: "volatile-lru",
+  VOLATILE_LFU: "volatile-lfu",
+  ALLKEYS_RANDOM: "allkeys-random",
+  VOLATILE_RANDOM: "volatile-random",
+  VOLATILE_TTL: "volatile-ttl",
+} as const
+
+export type KeyEvictionPolicy =
+  typeof KEY_EVICTION_POLICY[keyof typeof KEY_EVICTION_POLICY]

@@ -22,7 +22,8 @@ import { hotKeysRequested } from "../valkey-features/hotkeys/hotKeysSlice.ts"
 import { commandLogsRequested } from "../valkey-features/commandlogs/commandLogsSlice.ts"
 import history from "../../history.ts"
 import { setClusterData } from "../valkey-features/cluster/clusterSlice.ts"
-import type { Store } from "@reduxjs/toolkit"
+import { setConfig } from "../valkey-features/config/configSlice.ts"
+import type { Action, PayloadAction, Store } from "@reduxjs/toolkit"
 
 export const connectionEpic = (store: Store) =>
   merge(
@@ -227,18 +228,18 @@ export const sendRequestEpic = () =>
     }),
   )
 
-export const setDataEpic = () =>
+export const setDataEpic = (store: Store) =>
   action$.pipe(
     filter(
       ({ type }) =>
         type === standaloneConnectFulfilled.type ||
           type === clusterConnectFulfilled.type,
     ),
-    tap((action) => {
+    tap((action: PayloadAction) => {
       const socket = getSocket()
 
-      const { clusterId, connectionId } = action.payload
-    
+      const { clusterId, connectionId } = action.payload 
+      store.dispatch(setConfig( action.payload))
       if (action.type === clusterConnectFulfilled.type) {
         socket.next({ type: setClusterData.type, payload: { clusterId, connectionId } })
       }
@@ -262,7 +263,8 @@ export const getHotKeysEpic = (store: Store) =>
       const state = store.getState()
       const clusters = state.valkeyCluster.clusters
       const connection = state.valkeyConnection.connections[connectionId]
-      const lfuEnabled = connection.connectionDetails.lfuEnabled
+      const lfuEnabled = connection.connectionDetails.keyEvictionPolicy.includes("lfu") ?? false
+      const clusterSlotStatsEnabled = connection.connectionDetails.clusterSlotStatsEnabled
 
       const connectionIds =
         clusterId !== undefined
@@ -271,7 +273,7 @@ export const getHotKeysEpic = (store: Store) =>
 
       socket.next({
         type: action.type,
-        payload: { connectionIds, clusterId, lfuEnabled },
+        payload: { connectionIds, clusterId, lfuEnabled, clusterSlotStatsEnabled },
       })
       
     }),

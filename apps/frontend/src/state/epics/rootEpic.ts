@@ -23,7 +23,7 @@ export const registerEpics = (store: Store) => {
     deleteConnectionEpic(),
     updateConnectionDetailsEpic(store),
     sendRequestEpic(),
-    setDataEpic(),
+    setDataEpic(store),
     getHotKeysEpic(store),
     getCommandLogsEpic(store),
     keyBrowserEpic(),

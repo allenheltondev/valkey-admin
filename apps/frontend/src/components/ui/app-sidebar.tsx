@@ -119,7 +119,7 @@ export function AppSidebar() {
               icon: Github,
               isExternal: true,
             },
-            { to: "/settings", title: "Settings", icon: Cog },
+            { to: (clusterId ? `/${clusterId}/${id}/settings` : `/${id}/settings`), title: "Settings", icon: Cog },
             { to: "/learnmore", title: "Learn More", icon: CircleQuestionMark },
           ].map((item) => (
             <li key={item.to || item.href}>
