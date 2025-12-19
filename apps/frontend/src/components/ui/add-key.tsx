@@ -19,7 +19,7 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
   const dispatch = useAppDispatch()
   const jsonModuleAvailable = useSelector(selectJsonModuleAvailable(id!))
 
-  const [keyType, setKeyType] = useState("Key type")
+  const [keyType, setKeyType] = useState(KEY_TYPES.STRING)
   const [keyName, setKeyName] = useState("")
   const [ttl, setTtl] = useState("")
   const [value, setValue] = useState("")
@@ -263,7 +263,6 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
                     onChange={(e) => setKeyType(e.target.value)}
                     value={keyType}
                   >
-                    <option disabled>Key type</option>
                     <option>{KEY_TYPES.STRING}</option>
                     <option>{KEY_TYPES.HASH}</option>
                     <option>{KEY_TYPES.LIST}</option>
@@ -360,7 +359,7 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
             <div className="pt-2 text-sm flex gap-4">
               <button
                 className="px-4 py-2 w-full bg-tw-primary text-white rounded hover:bg-tw-primary/90"
-                disabled={keyType === "Select key type" || !keyName || jsonModuleAvailable === false}
+                disabled={!keyName || (!jsonModuleAvailable && keyType === KEY_TYPES.JSON) }
                 type="submit"
               >
                 Submit
