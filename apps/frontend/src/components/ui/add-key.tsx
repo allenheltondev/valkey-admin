@@ -19,7 +19,7 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
   const dispatch = useAppDispatch()
   const jsonModuleAvailable = useSelector(selectJsonModuleAvailable(id!))
 
-  const [keyType, setKeyType] = useState("Key type")
+  const [keyType, setKeyType] = useState(KEY_TYPES.STRING)
   const [keyName, setKeyName] = useState("")
   const [ttl, setTtl] = useState("")
   const [value, setValue] = useState("")
@@ -259,7 +259,6 @@ export default function AddNewKey({ onClose }: AddNewKeyProps) {
                   <label>Select key type</label>
                   <select
                     className="border border-tw-dark-border rounded p-2"
-                    defaultValue={KEY_TYPES.STRING}
                     id="key-type"
                     onChange={(e) => setKeyType(e.target.value)}
                     value={keyType}

@@ -113,12 +113,6 @@ export function AppSidebar() {
       <div className="flex flex-col items-stretch w-full">
         <ul className="space-y-2">
           {[
-            {
-              href: "https://github.com/valkey-io/valkey-admin",
-              title: "GitHub",
-              icon: Github,
-              isExternal: true,
-            },
             ...(isConnected
               ? [
                 {
@@ -127,7 +121,13 @@ export function AppSidebar() {
                   icon: Cog,
                 },
                 {
-                  to: clusterId ? `/${clusterId}/${id}/learnmore` : `${id}/learnmore`,
+                  href: "https://github.com/valkey-io/valkey-admin",
+                  title: "GitHub",
+                  icon: Github,
+                  isExternal: true,
+                },
+                {
+                  to: `${id}/learnmore`,
                   title: "Learn More",
                   icon: CircleQuestionMark,
                 },
@@ -139,10 +139,17 @@ export function AppSidebar() {
                   icon: Cog,
                 },
                 {
+                  href: "https://github.com/valkey-io/valkey-admin",
+                  title: "GitHub",
+                  icon: Github,
+                  isExternal: true,
+                },
+                {
                   to: "/learnmore",
                   title: "Learn More",
                   icon: CircleQuestionMark,
                 },
+
               ]),
           ]
             .map((item) => (
