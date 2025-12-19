@@ -2,7 +2,7 @@ import { GlideClient, GlideClusterClient, InfoOptions } from "@valkey/valkey-gli
 import * as R from "ramda"
 import WebSocket from "ws"
 import { VALKEY } from "../../../common/src/constants"
-import { parseInfo } from "./utils"
+import { parseInfo, resolveHostnameOrIpAddress } from "./utils"
 import { sanitizeUrl } from "../../../common/src/url-utils.ts"
 import { checkJsonModuleAvailability } from "./check-json-module.ts"
 
@@ -23,6 +23,8 @@ export async function connectToValkey(
     },
   ]
   try {
+    // If we've connected to the same host using IP addr or vice versa, return
+    returnIfDuplicateConnection(payload, clients, ws)
     const standaloneClient = await GlideClient.createClient({
       addresses,
       requestTimeout: 5000,
@@ -137,6 +139,7 @@ async function connectToCluster(
   lfuEnabled: boolean,
   jsonModuleAvailable: boolean,
 ) {
+  standaloneClient.customCommand(["CONFIG", "SET", "cluster-announce-hostname", addresses[0].host])
   const { clusterNodes, clusterId } = await discoverCluster(standaloneClient)
   if (R.isEmpty(clusterNodes)) {
     throw new Error("No cluster nodes discovered")
@@ -176,4 +179,21 @@ async function connectToCluster(
     JSON.stringify(clusterConnectionInfo),
   )
   return clusterClient
+}
+
+export async function returnIfDuplicateConnection(
+  payload:{connectionId: string, host: string, port: number}, 
+  clients: Map<string, GlideClient | GlideClusterClient>,
+  ws: WebSocket) 
+{
+  const resolvedAddresses = (await resolveHostnameOrIpAddress(payload.host)).addresses
+  console.log("Resolved addresses: ", resolvedAddresses)
+  if (resolvedAddresses.some((address) => clients.has(sanitizeUrl(`${address}:${payload.port}`)))) {
+    return ws.send(
+      JSON.stringify({
+        type: VALKEY.CONNECTION.standaloneConnectFulfilled,
+        payload: { connectionId: payload.connectionId },
+      }),
+    )
+  }
 }
