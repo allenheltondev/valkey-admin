@@ -13,7 +13,7 @@ export default defineConfig({
     },
 
     rollupOptions: {
-      external: ["@valkey/valkey-glide", "ws"], // Externalize native modules and ws
+      external: ["@valkey/valkey-glide", "ws", "p-limit"], // Externalize native modules, ws, and p-limit
     },
 
     emptyOutDir: false,
