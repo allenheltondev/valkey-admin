@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useSelector } from "react-redux"
 import { HousePlug } from "lucide-react"
-import * as R from "ramda"
 import ConnectionForm from "../ui/connection-form.tsx"
 import EditForm from "../ui/edit-form.tsx"
 import type { ConnectionState } from "@/state/valkey-features/connection/connectionSlice.ts"
@@ -15,7 +14,7 @@ export function Connection() {
   const [editingConnectionId, setEditingConnectionId] = useState<string | undefined>(undefined)
   const connections = useSelector(selectConnections)
 
-  const handleEditConnection = (connectionId: string) => {
+   const handleEditConnection = (connectionId: string) => {
     setEditingConnectionId(connectionId)
     setShowEditForm(true)
   }
@@ -24,9 +23,15 @@ export function Connection() {
     setShowEditForm(false)
     setEditingConnectionId(undefined)
   }
+  // filter based on connections that connected at least once (have history) then sort by history length
+  const connectionsWithHistory = Object.entries(connections)
+    .filter(([, connection]) => (connection.connectionHistory ?? []).length > 0)
+    .sort(([, a], [, b]) =>
+      (b.connectionHistory?.length ?? 0) - (a.connectionHistory?.length ?? 0),
+    )
 
   // grouping connections
-  const { clusterGroups, standaloneConnections } = Object.entries(connections).reduce<{
+  const { clusterGroups, standaloneConnections } = connectionsWithHistory.reduce<{
     clusterGroups: Record<string, Array<{ connectionId: string; connection: ConnectionState }>>
     standaloneConnections: Array<{ connectionId: string; connection: ConnectionState }>
   }>(
@@ -43,6 +48,7 @@ export function Connection() {
 
   const hasClusterGroups = Object.keys(clusterGroups).length > 0
   const hasStandaloneConnections = standaloneConnections.length > 0
+  const hasConnectionsWithHistory = connectionsWithHistory.length > 0
 
   const connectButton = () =>
     <button
@@ -59,13 +65,13 @@ export function Connection() {
         <h1 className="text-xl font-bold flex items-center gap-2 text-gray-700 dark:text-white">
           <HousePlug /> Connections
         </h1>
-        {R.isNotEmpty(connections) && connectButton()}
+        {hasConnectionsWithHistory && connectButton()}
       </div>
 
       {showConnectionForm && <ConnectionForm onClose={() => setShowConnectionForm(false)} />}
       {showEditForm && <EditForm connectionId={editingConnectionId} onClose={handleCloseEditForm} />}
 
-      {R.isEmpty(connections) ? (
+      {!hasConnectionsWithHistory ? (
         <div className="flex-1 flex items-center justify-center flex-col gap-4">
           <div className="text-center">
             <h2 className="text-lg font-semibold text-gray-700 dark:text-white mb-2">

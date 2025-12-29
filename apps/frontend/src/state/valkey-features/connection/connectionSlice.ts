@@ -26,11 +26,17 @@ interface ReconnectState {
   nextRetryDelay?: number;
 }
 
+interface ConnectionHistoryEntry {
+  timestamp: number;
+  event: "Connected";
+}
+
 export interface ConnectionState {
   status: ConnectionStatus;
   errorMessage: string | null;
   connectionDetails: ConnectionDetails;
   reconnect?: ReconnectState;
+  connectionHistory?: ConnectionHistoryEntry[];
   wasEdit?: boolean;
 }
 
@@ -73,6 +79,10 @@ const connectionSlice = createSlice({
         ...(isRetry && existingConnection?.reconnect && {
           reconnect: existingConnection.reconnect,
         }),
+        // for preserving connection history
+        ...(existingConnection?.connectionHistory && {
+          connectionHistory: existingConnection.connectionHistory,
+        }),
       }
     },
     standaloneConnectFulfilled: (
@@ -90,6 +100,13 @@ const connectionSlice = createSlice({
         connectionState.connectionDetails.lfuEnabled = connectionDetails.lfuEnabled ?? connectionState.connectionDetails.lfuEnabled
         // eslint-disable-next-line max-len
         connectionState.connectionDetails.jsonModuleAvailable = connectionDetails.jsonModuleAvailable ?? connectionState.connectionDetails.lfuEnabled
+
+        // keep track of connection history
+        connectionState.connectionHistory ??= []
+        connectionState.connectionHistory.push({
+          timestamp: Date.now(),
+          event: CONNECTED,
+        })
         // Clear the wasEdit flag after successful connection
         delete connectionState.wasEdit
       }
@@ -114,6 +131,13 @@ const connectionSlice = createSlice({
         connectionState.connectionDetails.jsonModuleAvailable = jsonModuleAvailable
         // Clear retry state on successful connection
         delete connectionState.reconnect
+
+        // keep track of connection history
+        connectionState.connectionHistory ??= []
+        connectionState.connectionHistory.push({
+          timestamp: Date.now(),
+          event: CONNECTED,
+        })
         // Clear the wasEdit flag after successful connection
         delete connectionState.wasEdit
       }
@@ -129,7 +153,7 @@ const connectionSlice = createSlice({
         if (isRetrying && existingConnection.errorMessage) {
           state.connections[connectionId].errorMessage = existingConnection.errorMessage
         } else {
-          state.connections[connectionId].errorMessage = errorMessage || "Valkey error"
+          state.connections[connectionId].errorMessage = errorMessage || "Valkey error: Unable to connect."
         }
       }
     },

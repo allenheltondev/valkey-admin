@@ -60,6 +60,7 @@ export const connectionEpic = (store: Store) =>
             (p) => ({
               connectionDetails: connection?.connectionDetails || p.connectionDetails,
               status: NOT_CONNECTED,
+              connectionHistory: connection?.connectionHistory || [],
             }),
             (connectionToSave) => ({ ...currentConnections, [payload.connectionId]: connectionToSave }),
             JSON.stringify,
@@ -117,6 +118,19 @@ export const valkeyRetryEpic = (store: Store) =>
 
       if (!connection) {
         console.log(`No connection found for ${connectionId}, skipping retry`)
+        return EMPTY
+      }
+
+      // Check if this was a previously successful connection (exists in localStorage)
+      const savedConnections = R.pipe(
+        (v: string) => localStorage.getItem(v),
+        (s) => (s === null ? {} : JSON.parse(s)),
+      )(LOCAL_STORAGE.VALKEY_CONNECTIONS)
+
+      const wasPreviouslyConnected = savedConnections[connectionId] !== undefined
+
+      if (!wasPreviouslyConnected) {
+        console.log(`First-time connection failed for ${connectionId}, not retrying`)
         return EMPTY
       }
 
@@ -239,6 +253,7 @@ export const updateConnectionDetailsEpic = (store: Store) =>
 
         if (connection && currentConnections[connectionId]) {
           currentConnections[connectionId].connectionDetails = connection.connectionDetails
+          currentConnections[connectionId].connectionHistory = connection.connectionHistory || []
           localStorage.setItem(LOCAL_STORAGE.VALKEY_CONNECTIONS, JSON.stringify(currentConnections))
         }
       } catch (e) {
