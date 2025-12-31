@@ -10,12 +10,13 @@ type SortOrder = "asc" | "desc"
 
 interface HotKeysProps {
   data: [string, number, number | null, number][] | null
+  errorMessage: string | null
   status?: string
   onKeyClick?: (keyName: string) => void
   selectedKey?: string | null
 }
 
-export function HotKeys({ data, status, onKeyClick, selectedKey }: HotKeysProps) {
+export function HotKeys({ data, errorMessage, status, onKeyClick, selectedKey }: HotKeysProps) {
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
 
   const toggleSortOrder = () => {
@@ -160,15 +161,16 @@ export function HotKeys({ data, status, onKeyClick, selectedKey }: HotKeysProps)
           <Flame className="mb-3 opacity-30" size={48} />
           <span className="text-lg font-medium">No Hot Keys Found</span>
           <span className="text-sm mt-1">Keys with frequent access will appear here</span>
-          <span className="text-sm mt-1">
-            <span className="font-semibold">Note:</span>
-            {" "}To collect hotkeys, you must either have
-            <span className="font-semibold"> monitoring enabled</span>
-            {" "}in Settings or use an
-            <span className="font-semibold"> LFU eviction policy</span>
-            {" "}with
-            <span className="font-semibold"> cluster slot stats enabled</span>.
-          </span>
+          {errorMessage && (
+            <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-md">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-700 dark:text-red-400 text-left">
+                  {errorMessage}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

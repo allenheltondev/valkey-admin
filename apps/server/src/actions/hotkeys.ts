@@ -49,7 +49,16 @@ export const hotKeysRequested = withDeps<Deps, void>(
       const metricsServerURI = metricsServerURIs.get(connectionId)
       const url = new URL("/hot-keys", metricsServerURI)
       if (clusterSlotStatsEnabled && lfuEnabled) url.searchParams.set("useHotSlots", "true")
-      else if (!monitorEnabled) sendHotKeysError(ws, connectionId, "Unable to fetch hot keys. Enable monitor or lfu policy/cluster slot stats")
+      else if (!monitorEnabled) {
+        sendHotKeysError(
+          ws,
+          connectionId,
+          "To collect hotkeys, you must either have monitoring enabled in Settings " +
+          "or use an LFU eviction policy with cluster-slot-stats enabled",
+
+        )
+        return 
+      }
       try {
         const initialResponse = await fetch(url)
         const initialParsedResponse: HotKeysResponse = await initialResponse.json() as HotKeysResponse
