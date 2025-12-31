@@ -12,15 +12,17 @@ interface MonitorConfig {
   monitorEnabled: boolean, 
   // How long to monitor before stopping (ms)
   monitorDuration: number,
+
+  // TODO: expose monitorInterval and continuousMonitoring
   // How long to wait before monitoring again when using continuous mode (ms)
-  //monitorInterval: number,
+  monitorInterval?: number,
   // Default is one cycle and then turn off monitoring
-  //continuousMonitoring: boolean,
+  continuousMonitoring?: boolean,
 }
 interface ConfigState {
   [connectionId: string]: {
     darkMode: boolean,
-    // Valkey related. Won't expose yet.
+    // Valkey related. TODO: find best way to expose to user
     keyEvictionPolicy?: KeyEvictionPolicy
     clusterSlotStatsEnabled?: boolean,
     pollingInterval: number, 
@@ -46,8 +48,6 @@ const configSlice = createSlice({
           monitoring: {
             monitorEnabled: false, 
             monitorDuration: 6000,
-          //monitorInterval: 20000, 
-          //continuousMonitoring: false,
           },
           status: "updated",
         }
