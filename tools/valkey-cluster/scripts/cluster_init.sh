@@ -4,8 +4,8 @@ set -eu
 # Talk to nodes via Docker DNS names on the internal network.
 FIRST_HOST=valkey-7001
 FIRST_PORT=7001
-VALKEY_USER=appuser
-VALKEY_PASS=admin
+VALKEY_USER=${VALKEY_USER:-appuser}
+VALKEY_PASS=${VALKEY_PASS:-admin}
 
 NODES="
 valkey-7001:7001
