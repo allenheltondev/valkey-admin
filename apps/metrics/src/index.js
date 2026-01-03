@@ -43,7 +43,17 @@ async function main() {
 
   app.get("/cpu", async (_req, res) => {
     try {
-      const series = await Streamer.info_cpu(cpuFold({ tolerance: 0.05 }))
+      const tolerance = R.pipe(
+        R.pathOr("0.025", ["query", "tolerance"]),
+        Number,
+        R.when( // when not a number or more than 20% — default to 2.5% tolerance interval
+          R.either(Number.isNaN, R.lte(0.2)),
+          R.always(0.025),
+        ),
+        Math.abs, // no negative numbers
+      )(_req)
+
+      const series = await Streamer.info_cpu(cpuFold({ tolerance }))
       res.json(series)
     } catch (e) {
       res.status(500).json({ error: e.message })
