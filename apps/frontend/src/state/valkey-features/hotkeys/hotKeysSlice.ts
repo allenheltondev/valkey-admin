@@ -37,11 +37,13 @@ const hotKeysSlice = createSlice({
       if (!state[connectionId]) {
         state[connectionId] = {
           hotKeys: [],
-          checkAt: null, 
+          checkAt: null,
           monitorRunning: false,
           nodeId: null,
           status: PENDING,
         }
+      } else {
+        state[connectionId].status = PENDING
       }
     },
     hotKeysFulfilled: (state, action) => {

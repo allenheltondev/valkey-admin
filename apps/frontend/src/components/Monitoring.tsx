@@ -61,6 +61,12 @@ export const Monitoring = () => {
     }
   }
 
+  const refreshHotKeys = () => {
+    if (id) {
+      dispatch(hotKeysRequested({ connectionId: id, clusterId }))
+    }
+  }
+
   const getCurrentCommandLogData = () => {
     switch (commandLogSubTab) {
       case "slow":
@@ -114,8 +120,7 @@ export const Monitoring = () => {
                             ${isActive
                   ? "border-tw-primary text-tw-primary"
                   : "border-transparent hover:text-tw-primary text-gray-400"
-                }
-                        `}
+                }`}
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                 >
@@ -125,6 +130,16 @@ export const Monitoring = () => {
             })}
           </nav>
         </div>
+
+        {/* Hot Keys Refresh */}
+        {activeTab === "hot-keys" && (
+          <button
+            className="flex items-center gap-2 font-light text-sm"
+            onClick={refreshHotKeys}
+          >
+            Refresh <RefreshCcw className="hover:text-tw-primary" size={15} />
+          </button>
+        )}
 
         {/* Command Log Sub-tabs and Refresh */}
         {activeTab === "command-logs" && (
