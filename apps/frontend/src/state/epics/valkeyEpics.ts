@@ -24,6 +24,7 @@ import { commandLogsRequested } from "../valkey-features/commandlogs/commandLogs
 import history from "../../history.ts"
 import { setClusterData } from "../valkey-features/cluster/clusterSlice.ts"
 import { setConfig, updateConfig, updateConfigFulfilled } from "../valkey-features/config/configSlice.ts"
+import { cpuUsageRequested } from "../valkey-features/cpu/cpuSlice.ts"
 import type { PayloadAction, Store } from "@reduxjs/toolkit"
 
 const getConnectionIds = (store: Store, action) => {
@@ -375,3 +376,22 @@ export const enableClusterSlotStatsEpic = (store: Store) =>
     }),
   )
 
+export const getCpuUsageEpic = (store: Store) =>
+  action$.pipe(
+    select(cpuUsageRequested),
+    tap((action) => {
+      try {
+        const { timeRange } = action.payload
+        const socket = getSocket()
+        const connectionIds = getConnectionIds(store, action)
+
+        socket.next({
+          type: action.type,
+          payload: { connectionIds, timeRange },
+        })
+      } catch (error) {
+        console.error("[getCpuUsageEpic] Error sending action:", error)
+      }
+    }),
+    ignoreElements(),
+  )

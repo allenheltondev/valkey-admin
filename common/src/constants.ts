@@ -78,6 +78,11 @@ export const VALKEY = {
     updateConfigFailed: "updateConfigFailed",
     enableClusterSlotStats: "enableClusterSlotStats",
   }),
+  CPU: makeNamespace( "cpu",{
+    cpuUsageRequested: "cpuUsageRequested",
+    cpuUsageFulfilled: "cpuUsageFulfilled",
+    cpuUsageError: "cpuUsageError",
+  }),
 } as const
 
 export const CONNECTED = "Connected"
