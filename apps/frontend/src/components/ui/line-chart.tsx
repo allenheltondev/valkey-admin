@@ -16,6 +16,28 @@ export default function LineChartComponent({
   title,
   subtitle,
 }: LineChartComponentProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full">
+        <h2 className="text-xl font-bold text-center mb-2 text-black dark:text-white">
+          {title}
+        </h2>
+        {subtitle && (
+          <div className="text-center text-sm text-gray-600 dark:text-gray-400 mb-4">
+            {subtitle}
+          </div>
+        )}
+        <div className="flex items-center justify-center h-[300px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+          <div className="text-center">
+            <p className="text-gray-500 dark:text-gray-400">
+              {label} data will appear here
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full">
       <h2 className="text-xl font-bold text-center mb-2 text-black dark:text-white">

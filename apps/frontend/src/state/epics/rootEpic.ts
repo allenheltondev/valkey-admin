@@ -30,7 +30,7 @@ export const registerEpics = (store: Store) => {
     getCommandLogsEpic(store),
     updateConfigEpic(store),
     keyBrowserEpic(),
-    getCpuUsageEpic(store)
+    getCpuUsageEpic(store),
   ).subscribe({
     error: (err) => console.error("Epic error:", err),
   })
