@@ -15,6 +15,7 @@ import {
 import { hotKeysRequested } from "./actions/hotkeys.ts"
 import { commandLogsRequested } from "./actions/commandLogs.ts"
 import { updateConfig, enableClusterSlotStats } from "./actions/config.ts"
+import { cpuUsageRequested } from "./actions/cpuUsage.ts"
 import { Handler, ReduxAction, unknownHandler, type WsActionMessage } from "./actions/utils.ts"
 
 interface MetricsServerMessage {
@@ -80,6 +81,7 @@ wss.on("connection", (ws: WebSocket) => {
       [VALKEY.COMMANDLOGS.commandLogsRequested]: commandLogsRequested,
       [VALKEY.CONFIG.updateConfig]: updateConfig, 
       [VALKEY.CONFIG.enableClusterSlotStats]: enableClusterSlotStats, 
+      [VALKEY.CPU.cpuUsageRequested]: cpuUsageRequested,
 
     }
 

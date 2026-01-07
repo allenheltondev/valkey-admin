@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { LayoutDashboard, Search } from "lucide-react"
 import { useParams } from "react-router"
@@ -9,12 +9,24 @@ import { singleMetricDescriptions } from "@common/src/dashboard-metrics"
 import { AppHeader } from "./ui/app-header"
 import Accordion from "./ui/accordion"
 import DonutChart from "./ui/donut-chart"
+import LineChartComponent from "./ui/line-chart"
 import { selectData } from "@/state/valkey-features/info/infoSelectors.ts"
+import { cpuUsageRequested, selectCpuUsage } from "@/state/valkey-features/cpu/cpuSlice.ts"
+import { useAppDispatch } from "@/hooks/hooks"
 
 export function Dashboard() {
   const { id } = useParams()
+  const dispatch = useAppDispatch()
   const infoData = useSelector(selectData(id!)) || {}
+  const cpuUsageData = useSelector(selectCpuUsage(id!))
   const [searchQuery, setSearchQuery] = useState("")
+  const [timeRange, setTimeRange] = useState("1h")
+
+  useEffect(() => {
+    if (id) {
+      dispatch(cpuUsageRequested({ connectionId: id, timeRange }))
+    }
+  }, [id, dispatch, timeRange])
 
   if (!infoData) {
     return (
@@ -101,92 +113,118 @@ export function Dashboard() {
         icon={<LayoutDashboard size={20} />}
         title="Dashboard"
       />
-      {/* Memory Area */}
-      <div className="flex justify-evenly dark:border-tw-dark-border border rounded mb-4">
-        {[
-          ["Total Memory", memoryUsageMetrics.total_system_memory],
-          ["Used Memory", memoryUsageMetrics.used_memory]].map(([label, value]) => (
-          <div className="h-20 w-1/3 p-4 flex items-center justify-center gap-4" key={label}>
-            <Database className="mb-2 text-tw-primary" size={40} />
-            <div className="flex flex-col items-center">
-              <span className="text-2xl font-semibold">
-                {formatBytes(value as number)}
-              </span>
-              <span className="font-light text-sm">{label}</span>
-            </div>
-          </div>))}
-      </div>
-      <div className="flex flex-1 min-h-0 gap-3">
-        {/* Accordion Area */}
-        <div className="w-1/2 overflow-y-auto border dark:border-tw-dark-border rounded p-2">
-          {/* Search or Filtering Input */}
-          <div className="mb-4 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              className="w-full pl-10 pr-4 py-2 border dark:border-tw-dark-border rounded bg-white dark:bg-gray-800
+      <div className="flex-1 overflow-y-auto">
+        {/* Memory Area */}
+        <div className="flex justify-evenly dark:border-tw-dark-border border rounded mb-4">
+          {[
+            ["Total Memory", memoryUsageMetrics.total_system_memory],
+            ["Used Memory", memoryUsageMetrics.used_memory]].map(([label, value]) => (
+            <div className="h-20 w-1/3 p-4 flex items-center justify-center gap-4" key={label}>
+              <Database className="mb-2 text-tw-primary" size={40} />
+              <div className="flex flex-col items-center">
+                <span className="text-2xl font-semibold">
+                  {formatBytes(value as number)}
+                </span>
+                <span className="font-light text-sm">{label}</span>
+              </div>
+            </div>))}
+        </div>
+        <div className="flex flex-1 min-h-0 gap-3">
+          {/* Accordion Area */}
+          <div className="w-1/2 overflow-y-auto border dark:border-tw-dark-border rounded p-2">
+            {/* Search or Filtering Input */}
+            <div className="mb-4 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                className="w-full pl-10 pr-4 py-2 border dark:border-tw-dark-border rounded bg-white dark:bg-gray-800
                focus:outline-none focus:ring-2 focus:ring-tw-primary"
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search metrics..."
-              type="text"
-              value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search metrics..."
+                type="text"
+                value={searchQuery}
+              />
+            </div>
+            <Accordion
+              accordionDescription={accordionDescriptions.memoryUsageMetrics}
+              accordionItems={memoryUsageMetrics}
+              accordionName="Memory Usage Metrics"
+              searchQuery={searchQuery}
+              singleMetricDescriptions={singleMetricDescriptions} 
+              valueType="bytes" />
+            <Accordion
+              accordionDescription={accordionDescriptions.uptimeMetrics}
+              accordionItems={upTimeMetrics}
+              accordionName="Uptime Metrics"
+              searchQuery={searchQuery}
+              singleMetricDescriptions={singleMetricDescriptions} 
+              valueType="mixed" />
+            <Accordion
+              accordionDescription={accordionDescriptions.replicationPersistenceMetrics}
+              accordionItems={replicationPersistenceMetrics}
+              accordionName="Replication & Persistence Metrics"
+              searchQuery={searchQuery}
+              singleMetricDescriptions={singleMetricDescriptions} 
+              valueType="number" />
+            <Accordion
+              accordionDescription={accordionDescriptions.clientConnectivityMetrics}
+              accordionItems={clientConnectivityMetrics}
+              accordionName="Client Connectivity Metrics"
+              searchQuery={searchQuery}
+              singleMetricDescriptions={singleMetricDescriptions} 
+              valueType="number" />
+            <Accordion
+              accordionDescription={accordionDescriptions.commandExecutionMetrics}
+              accordionItems={commandExecutionMetrics}
+              accordionName="Command Execution Metrics"
+              searchQuery={searchQuery}
+              singleMetricDescriptions={singleMetricDescriptions} 
+              valueType="number" />
+            <Accordion
+              accordionDescription={accordionDescriptions.dataEffectivenessEvictionMetrics}
+              accordionItems={dataEffectivenessAndEvictionMetrics}
+              accordionName="Data Effectiveness & Eviction Metrics"
+              searchQuery={searchQuery} 
+              singleMetricDescriptions={singleMetricDescriptions}
+              valueType="number" />
+            <Accordion
+              accordionDescription={accordionDescriptions.messagingMetrics}
+              accordionItems={messagingMetrics}
+              accordionName="Messaging Metrics"
+              searchQuery={searchQuery} 
+              singleMetricDescriptions={singleMetricDescriptions}
+              valueType="number" />
+          </div>
+          {/* Chart Area */}
+          <div className="flex-1 min-w-0 border dark:border-tw-dark-border rounded p-4">
+            <DonutChart />
+          </div>
+        </div>
+        {/* cpu usage chart */}
+        <div className="flex gap-3 mt-4">
+          <div className="w-full border dark:border-tw-dark-border rounded p-4 bg-white dark:bg-gray-800">
+            <div className="flex gap-2 justify-end">
+              {(["1h", "6h", "12h"] as const).map((range) => (
+                <button
+                  className={`px-2 py-1 rounded text-sm ${timeRange === range
+                    ? "bg-tw-primary text-white"
+                    : "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  }`}
+                  key={range}
+                  onClick={() => setTimeRange(range)}
+                >
+                  {range.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <LineChartComponent
+              color="var(--tw-chart1)"
+              data={cpuUsageData || []}
+              label="CPU Usage"
+              subtitle="Real-time CPU utilization monitoring"
+              title="CPU Usage Over Time"
             />
           </div>
-          <Accordion
-            accordionDescription={accordionDescriptions.memoryUsageMetrics}
-            accordionItems={memoryUsageMetrics}
-            accordionName="Memory Usage Metrics"
-            searchQuery={searchQuery}
-            singleMetricDescriptions={singleMetricDescriptions} 
-            valueType="bytes" />
-          <Accordion
-            accordionDescription={accordionDescriptions.uptimeMetrics}
-            accordionItems={upTimeMetrics}
-            accordionName="Uptime Metrics"
-            searchQuery={searchQuery}
-            singleMetricDescriptions={singleMetricDescriptions} 
-            valueType="mixed" />
-          <Accordion
-            accordionDescription={accordionDescriptions.replicationPersistenceMetrics}
-            accordionItems={replicationPersistenceMetrics}
-            accordionName="Replication & Persistence Metrics"
-            searchQuery={searchQuery}
-            singleMetricDescriptions={singleMetricDescriptions} 
-            valueType="number" />
-          <Accordion
-            accordionDescription={accordionDescriptions.clientConnectivityMetrics}
-            accordionItems={clientConnectivityMetrics}
-            accordionName="Client Connectivity Metrics"
-            searchQuery={searchQuery}
-            singleMetricDescriptions={singleMetricDescriptions} 
-            valueType="number" />
-          <Accordion
-            accordionDescription={accordionDescriptions.commandExecutionMetrics}
-            accordionItems={commandExecutionMetrics}
-            accordionName="Command Execution Metrics"
-            searchQuery={searchQuery}
-            singleMetricDescriptions={singleMetricDescriptions} 
-            valueType="number" />
-          <Accordion
-            accordionDescription={accordionDescriptions.dataEffectivenessEvictionMetrics}
-            accordionItems={dataEffectivenessAndEvictionMetrics}
-            accordionName="Data Effectiveness & Eviction Metrics"
-            searchQuery={searchQuery} 
-            singleMetricDescriptions={singleMetricDescriptions}
-            valueType="number" />
-          <Accordion
-            accordionDescription={accordionDescriptions.messagingMetrics}
-            accordionItems={messagingMetrics}
-            accordionName="Messaging Metrics"
-            searchQuery={searchQuery} 
-            singleMetricDescriptions={singleMetricDescriptions}
-            valueType="number" />
-        </div>
-        {/* Chart Area */}
-        <div className="flex-1 min-w-0 border dark:border-tw-dark-border rounded p-4">
-          <DonutChart />
-        </div>
-      </div>
+        </div></div>
     </div>
   )
-
 }

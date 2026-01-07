@@ -25,6 +25,7 @@ import history from "../../history.ts"
 import { setClusterData } from "../valkey-features/cluster/clusterSlice.ts"
 import { setConfig, updateConfig, updateConfigFulfilled } from "../valkey-features/config/configSlice.ts"
 import type { PayloadAction, Store } from "@reduxjs/toolkit"
+import { cpuUsageRequested } from "../valkey-features/cpu/cpuSlice.ts"
 
 const getConnectionIds = (store: Store, action) => {
   // If we're connected to a cluster, pass connectionId of each node
@@ -375,3 +376,29 @@ export const enableClusterSlotStatsEpic = (store: Store) =>
     }),
   )
 
+  export const getCpuUsageEpic = (store: Store) =>
+  action$.pipe(
+    select(cpuUsageRequested),
+    tap((action) => {
+      try {
+        const { clusterId, connectionId, timeRange } = action.payload
+        const socket = getSocket()
+
+        const state = store.getState()
+        const clusters = state.valkeyCluster.clusters
+
+        const connectionIds =
+          clusterId !== undefined
+            ? Object.keys(clusters[clusterId].clusterNodes)
+            : [connectionId]
+
+        socket.next({
+          type: action.type,
+          payload: { connectionIds, timeRange },
+        })
+      } catch (error) {
+        console.error("[getCpuUsageEpic] Error sending action:", error)
+      }
+    }),
+    ignoreElements(),
+  )
