@@ -381,16 +381,9 @@ export const getCpuUsageEpic = (store: Store) =>
     select(cpuUsageRequested),
     tap((action) => {
       try {
-        const { clusterId, connectionId, timeRange } = action.payload
+        const { timeRange } = action.payload
         const socket = getSocket()
-
-        const state = store.getState()
-        const clusters = state.valkeyCluster.clusters
-
-        const connectionIds =
-          clusterId !== undefined
-            ? Object.keys(clusters[clusterId].clusterNodes)
-            : [connectionId]
+        const connectionIds = getConnectionIds(store, action)
 
         socket.next({
           type: action.type,
