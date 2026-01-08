@@ -3,27 +3,29 @@ import WebSocket from "ws"
 import { VALKEY } from "../../../common/src/constants"
 import { parseResponse } from "./utils"
 
+export const isRequestError = (x: unknown): x is Error | string =>
+  x instanceof Error ||
+  (typeof x === "string" && x.startsWith("ResponseError:"))
+
 export async function sendValkeyRunCommand(
   client: GlideClient | GlideClusterClient,
   ws: WebSocket,
   payload: { command: string; connectionId: string },
 ) {
   try {
-    let response = (await client.customCommand(
-      payload.command.split(" "),
-    ))
-    if (typeof response === "string") {
-      if (response.includes("ResponseError")) {
-        ws.send(
-          JSON.stringify({
-            meta: { command: payload.command },
-            type: VALKEY.COMMAND.sendFailed,
-            payload: response,
-          }),
-        )
-      }
-      response = parseResponse(response)
+    const response = await client.customCommand(payload.command.split(" "))
+
+    if (isRequestError(response)) {
+      ws.send(
+        JSON.stringify({
+          meta: { command: payload.command },
+          type: VALKEY.COMMAND.sendFailed,
+          payload: response,
+        }),
+      )
     }
+
+    const parsed = parseResponse(response)
 
     ws.send(
       JSON.stringify({
@@ -32,7 +34,7 @@ export async function sendValkeyRunCommand(
           command: payload.command,
         },
         type: VALKEY.COMMAND.sendFulfilled,
-        payload: response,
+        payload: parsed,
       }),
     )
   } catch (err) {
