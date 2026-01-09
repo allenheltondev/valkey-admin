@@ -78,7 +78,7 @@ const updateConfig = (partialConfig) => {
 }
 
 const validatePartialConfig = (partialConfig) => {
-  if (partialConfig == null || typeof partialConfig !== "object") {
+  if (partialConfig == null || typeof partialConfig !== "object" || Array.isArray(partialConfig)) {
     return new Error("Config update must be an object")
   }
 
@@ -90,7 +90,7 @@ const validatePartialConfig = (partialConfig) => {
   }
 
   if (partialConfig.monitoring !== undefined) {
-    if (typeof partialConfig.monitoring !== "object") {
+    if (typeof partialConfig.monitoring !== "object" || Array.isArray(partialConfig.monitoring)) {
       return new Error("monitoring must be an object")
     }
 
