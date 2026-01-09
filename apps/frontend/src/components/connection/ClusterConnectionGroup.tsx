@@ -1,8 +1,22 @@
-import { useState, useRef, useEffect } from "react"
-import { ChevronDown, ChevronRight, Network, CircleChevronRight, PencilIcon, CheckIcon, XIcon } from "lucide-react"
+import * as R from "ramda"
+import { useState, useRef, useEffect, useMemo } from "react"
+import {
+  ChevronDown,
+  ChevronRight,
+  Network,
+  CircleChevronRight,
+  PencilIcon,
+  CheckIcon,
+  XIcon,
+  PowerIcon
+} from "lucide-react"
 import { CONNECTED } from "@common/src/constants.ts"
 import { ConnectionEntry } from "./ConnectionEntry.tsx"
-import { updateConnectionDetails, type ConnectionState } from "@/state/valkey-features/connection/connectionSlice"
+import {
+  updateConnectionDetails,
+  type ConnectionState,
+  connectPending
+} from "@/state/valkey-features/connection/connectionSlice"
 import { useAppDispatch } from "@/hooks/hooks.ts"
 import { Button } from "@/components/ui/button.tsx"
 import history from "@/history.ts"
@@ -12,6 +26,13 @@ interface ClusterConnectionGroupProps {
   connections: Array<{ connectionId: string; connection: ConnectionState }>
   onEdit?: (connectionId: string) => void
 }
+
+// we'll use this function to find the most recent cluster node opened — to reconnect without exploding the dropdown
+const getLatestTimestamp = R.pipe(
+  R.pathOr([], ["connection", "connectionHistory"]),
+  R.pluck("timestamp") as unknown as (xs: Array<{ timestamp: number }>) => number[],
+  R.reduce(R.max, -Infinity),
+)
 
 export const ClusterConnectionGroup = ({ clusterId, connections, onEdit }: ClusterConnectionGroupProps) => {
   const dispatch = useAppDispatch()
@@ -42,6 +63,11 @@ export const ClusterConnectionGroup = ({ clusterId, connections, onEdit }: Clust
   const firstNode = connections[0]
   const firstNodeAlias = firstNode?.connection.connectionDetails.alias
 
+  const lastOpenedNode = useMemo(
+    () => R.reduce(R.maxBy(getLatestTimestamp), null, connections),
+    [connections],
+  )
+
   const handleOpenCluster = () => {
     if (firstConnectedConnection) {
       history.navigate(`/${clusterId}/${firstConnectedConnection.connectionId}/cluster-topology`)
@@ -67,6 +93,12 @@ export const ClusterConnectionGroup = ({ clusterId, connections, onEdit }: Clust
     setEditedAlias(firstNodeAlias || "")
     setIsEditing(false)
   }
+
+  const handleConnectLatest = () => lastOpenedNode && dispatch(connectPending({
+    ...lastOpenedNode.connection.connectionDetails,
+    connectionId: lastOpenedNode.connectionId,
+    preservedHistory: lastOpenedNode.connection.connectionHistory,
+  }))
 
   return (
     <div
@@ -150,16 +182,28 @@ export const ClusterConnectionGroup = ({ clusterId, connections, onEdit }: Clust
         </div>
 
         <div className="flex items-center text-sm gap-2">
-          {hasConnectedInstance && (
-            <button
-              className="flex items-center gap-1 p-2 mr-4 rounded-md text-tw-primary border border-tw-primary/70
+          {
+            hasConnectedInstance ? (
+              <button
+                className="flex items-center gap-1 p-2 mr-4 rounded-md text-tw-primary border border-tw-primary/70
                hover:bg-tw-primary hover:text-white"
-              onClick={handleOpenCluster}
-            >
-              <CircleChevronRight size={16} />
-              Open Topology
-            </button>
-          )}
+                onClick={handleOpenCluster}
+              >
+                <CircleChevronRight size={16} />
+                Open Topology
+              </button>
+            ) : lastOpenedNode && !hasConnectedInstance ?
+              (
+                <Button
+                  className="flex items-center gap-1 p-2 mr-4 rounded-md"
+                  onClick={handleConnectLatest}
+                  variant="secondary"
+                >
+                  <PowerIcon size={16} />
+                  Connect Latest
+                </Button>
+              ) : null
+          }
         </div>
       </div>
 
