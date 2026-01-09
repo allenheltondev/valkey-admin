@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Check, Pencil, X, Trash } from "lucide-react"
+import { Check, Pencil, X, Trash, Plus } from "lucide-react"
 import { CustomTooltip } from "./custom-tooltip"
 import { Button } from "./button"
 import DeleteModal from "./delete-modal"
@@ -25,6 +25,12 @@ interface KeyDetailsHashProps {
   readOnly:boolean;
 }
 
+interface NewField {
+  tempId: string;
+  key: string;
+  value: string;
+}
+
 export default function KeyDetailsHash(
   { selectedKey, selectedKeyInfo, connectionId, readOnly = false }: KeyDetailsHashProps,
 ) {
@@ -33,6 +39,7 @@ export default function KeyDetailsHash(
   const [editedHashValue, setEditedHashValue] = useState<{ [key: string]: string }>({})
   const [deletedHashFields, setDeletedHashFields] = useState<Set<string>>(new Set())
   const [pendingDeleteField, setPendingDeleteField] = useState<string | null>(null)
+  const [newFields, setNewFields] = useState<NewField[]>([])
 
   const handleEdit = () => {
     if (isEditable) {
@@ -40,6 +47,7 @@ export default function KeyDetailsHash(
       setIsEditable(false)
       setEditedHashValue({})
       setDeletedHashFields(new Set())
+      setNewFields([])
     } else {
       // Start editing
       const initialHashValue: { [key: string]: string } = {}
@@ -48,26 +56,39 @@ export default function KeyDetailsHash(
       })
       setEditedHashValue(initialHashValue)
       setDeletedHashFields(new Set())
+      setNewFields([])
       setIsEditable(true)
     }
   }
 
   const handleSave = () => {
+    // combine existing edited fields and new fields
+    const existingFields = Object.entries(editedHashValue)
+      .filter(([field]) => !deletedHashFields.has(field))
+      .map(([field, value]) => ({
+        field,
+        value,
+      }))
+
+    const newFieldsToAdd = newFields
+      // to ensure no empty keys are added
+      .filter((nf) => nf.key.trim() !== "")
+      .map((nf) => ({
+        field: nf.key,
+        value: nf.value,
+      }))
+
     dispatch(updateKeyRequested({
       connectionId: connectionId,
       key: selectedKey,
       keyType: "hash",
-      fields: Object.entries(editedHashValue)
-        .filter(([field]) => !deletedHashFields.has(field))
-        .map(([field, value]) => ({
-          field,
-          value,
-        })),
+      fields: [...existingFields, ...newFieldsToAdd],
       deletedHashFields: Array.from(deletedHashFields),
     }))
     setIsEditable(false)
     setEditedHashValue({})
     setDeletedHashFields(new Set())
+    setNewFields([])
   }
 
   const handleHashFieldChange = (fieldKey: string, newValue: string) => {
@@ -90,6 +111,31 @@ export default function KeyDetailsHash(
 
   const cancelDeleteHashField = () => {
     setPendingDeleteField(null)
+  }
+
+  const handleAddNewField = () => {
+    const tempId = `new-${Date.now()}`
+    setNewFields((prev) => [...prev, { tempId, key: "", value: "" }])
+  }
+
+  const handleNewFieldKeyChange = (tempId: string, newKey: string) => {
+    setNewFields((prev) =>
+      prev.map((field) =>
+        field.tempId === tempId ? { ...field, key: newKey } : field,
+      ),
+    )
+  }
+
+  const handleNewFieldValueChange = (tempId: string, newValue: string) => {
+    setNewFields((prev) =>
+      prev.map((field) =>
+        field.tempId === tempId ? { ...field, value: newValue } : field,
+      ),
+    )
+  }
+
+  const handleRemoveNewField = (tempId: string) => {
+    setNewFields((prev) => prev.filter((field) => field.tempId !== tempId))
   }
 
   return (
@@ -152,7 +198,7 @@ export default function KeyDetailsHash(
                     <div className="flex gap-2">
                       <input
                         className="w-full p-2 dark:bg-tw-dark-bg dark:border-tw-dark-border border rounded focus:outline-none
-                                          focus:ring-2 focus:ring-blue-500"
+                                          focus:ring-2 focus:ring-tw-primary"
                         onChange={(e) => handleHashFieldChange(element.key, e.target.value)}
                         type="text"
                         value={editedHashValue[element.key] || ""}
@@ -183,6 +229,54 @@ export default function KeyDetailsHash(
                 <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white"></td>
               </tr>
             ))}
+          {isEditable && newFields.map((newField) => (
+            <tr key={newField.tempId}>
+              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
+                <input
+                  className="w-full p-2 dark:bg-tw-dark-bg dark:border-tw-dark-border border rounded focus:outline-none
+                                    focus:ring-2 focus:ring-tw-primary"
+                  onChange={(e) => handleNewFieldKeyChange(newField.tempId, e.target.value)}
+                  placeholder="Enter key"
+                  type="text"
+                  value={newField.key}
+                />
+              </td>
+              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
+                <div className="flex gap-2">
+                  <input
+                    className="w-full p-2 dark:bg-tw-dark-bg dark:border-tw-dark-border border rounded focus:outline-none
+                                      focus:ring-2 focus:ring-tw-primary"
+                    onChange={(e) => handleNewFieldValueChange(newField.tempId, e.target.value)}
+                    placeholder="Enter value"
+                    type="text"
+                    value={newField.value}
+                  />
+                  <CustomTooltip content="Remove field">
+                    <Button
+                      onClick={() => handleRemoveNewField(newField.tempId)}
+                      variant={"destructiveGhost"}
+                    >
+                      <X/>
+                    </Button>
+                  </CustomTooltip>
+                </div>
+              </td>
+              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white"></td>
+            </tr>
+          ))}
+          {isEditable && (
+            <tr>
+              <td className="py-3 px-4" colSpan={3}>
+                <Button
+                  className="w-full"
+                  onClick={handleAddNewField}
+                  variant={"secondary"}
+                >
+                  <Plus className="mr-2" /> Add
+                </Button>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

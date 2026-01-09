@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Check, Pencil, X, Trash } from "lucide-react"
+import { Check, Pencil, X, Trash, Plus } from "lucide-react"
 import { CustomTooltip } from "./custom-tooltip"
 import { Button } from "./button"
 import DeleteModal from "./delete-modal"
@@ -20,6 +20,11 @@ interface KeyDetailsSetProps {
   readOnly: boolean;
 }
 
+interface NewItem {
+  tempId: string;
+  value: string;
+}
+
 export default function KeyDetailsSet(
   { selectedKey, selectedKeyInfo, connectionId, readOnly = false }: KeyDetailsSetProps,
 ) {
@@ -28,6 +33,7 @@ export default function KeyDetailsSet(
   const [editedSetValues, setEditedSetValues] = useState<string[]>([])
   const [deletedValues, setDeletedValues] = useState<Set<string>>(new Set())
   const [pendingDeleteValue, setPendingDeleteValue] = useState<string | null>(null)
+  const [newItems, setNewItems] = useState<NewItem[]>([])
 
   const handleEdit = () => {
     if (isEditable) {
@@ -35,10 +41,12 @@ export default function KeyDetailsSet(
       setIsEditable(false)
       setEditedSetValues([])
       setDeletedValues(new Set())
+      setNewItems([])
     } else {
       // Start editing
       setEditedSetValues([...selectedKeyInfo.elements])
       setDeletedValues(new Set())
+      setNewItems([])
       setIsEditable(true)
     }
   }
@@ -56,16 +64,23 @@ export default function KeyDetailsSet(
 
     const deletedSetItems = Array.from(deletedValues)
 
+    const newSetItems = newItems
+      // ensure no empty values are added
+      .filter((item) => item.value.trim() !== "")
+      .map((item) => item.value)
+
     dispatch(updateKeyRequested({
       connectionId: connectionId,
       key: selectedKey,
       keyType: "set",
       setUpdates,
       deletedSetItems,
+      newSetItems,
     }))
     setIsEditable(false)
     setEditedSetValues([])
     setDeletedValues(new Set())
+    setNewItems([])
   }
 
   const handleSetFieldChange = (index: number, newValue: string) => {
@@ -89,6 +104,23 @@ export default function KeyDetailsSet(
 
   const cancelDeleteElement = () => {
     setPendingDeleteValue(null)
+  }
+
+  const handleAddNewItem = () => {
+    const tempId = `new-${Date.now()}`
+    setNewItems((prev) => [...prev, { tempId, value: "" }])
+  }
+
+  const handleNewItemChange = (tempId: string, newValue: string) => {
+    setNewItems((prev) =>
+      prev.map((item) =>
+        item.tempId === tempId ? { ...item, value: newValue } : item,
+      ),
+    )
+  }
+
+  const handleRemoveNewItem = (tempId: string) => {
+    setNewItems((prev) => prev.filter((item) => item.tempId !== tempId))
   }
 
   return (
@@ -183,6 +215,47 @@ export default function KeyDetailsSet(
                 <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white"></td>
               </tr>
             ))}
+          {isEditable && newItems.map((newItem) => (
+            <tr key={newItem.tempId}>
+              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
+                New
+              </td>
+              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white">
+                <div className="flex gap-2">
+                  <input
+                    className="w-full p-2 dark:bg-tw-dark-bg dark:border-tw-dark-border border rounded focus:outline-none
+                                      focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleNewItemChange(newItem.tempId, e.target.value)}
+                    placeholder="Enter value"
+                    type="text"
+                    value={newItem.value}
+                  />
+                  <CustomTooltip content="Remove item">
+                    <Button
+                      onClick={() => handleRemoveNewItem(newItem.tempId)}
+                      variant={"destructiveGhost"}
+                    >
+                      <X/>
+                    </Button>
+                  </CustomTooltip>
+                </div>
+              </td>
+              <td className="py-3 px-4 border-b border-tw-dark-border font-light dark:text-white"></td>
+            </tr>
+          ))}
+          {isEditable && (
+            <tr>
+              <td className="py-3 px-4" colSpan={3}>
+                <Button
+                  className="w-full"
+                  onClick={handleAddNewItem}
+                  variant={"secondary"}
+                >
+                  <Plus className="mr-2" /> Add
+                </Button>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
