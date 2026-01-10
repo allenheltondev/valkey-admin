@@ -1,19 +1,22 @@
 import { createSlice } from "@reduxjs/toolkit"
 import * as R from "ramda"
 
-interface ReplicaNode {
+export interface ReplicaNode {
   id: string;
   host: string;
   port: number;
 }
 
-interface MasterNode {
+export interface MasterNode {
   host: string;
   port: number;
+  username?: string;
+  password?: string;
+  tls: boolean;
   replicas: ReplicaNode[];
 }
 
-interface ParsedNodeInfo {
+export interface ParsedNodeInfo {
   server_name: string | null;
   uptime_in_days: string | null;
   tcp_port: string | null;
