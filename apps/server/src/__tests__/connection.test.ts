@@ -13,6 +13,7 @@ const DEFAULT_PAYLOAD = {
   port: 6379,
   username: "user0",
   password: "helloWorld123!",
+  tls: false,
   connectionId: "conn-123",
 }
 

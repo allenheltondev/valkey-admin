@@ -3,9 +3,16 @@ import { connectToValkey } from "../connection.ts"
 import { type Deps, withDeps } from "./utils.ts"
 import { setClusterDashboardData } from "../set-dashboard-data.ts"
 
+export interface ConnectionDetails {
+  host: string;
+  port: string;
+  username?: string;
+  password?: string;
+  tls: boolean;
+}
+
 type ConnectPayload = {
-  host: string
-  port: number
+  connectionDetails: ConnectionDetails,
   connectionId: string
 }
 

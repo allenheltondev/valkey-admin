@@ -6,14 +6,12 @@ import { parseInfo, resolveHostnameOrIpAddress } from "./utils"
 import { sanitizeUrl } from "../../../common/src/url-utils.ts"
 import { type KeyEvictionPolicy } from "../../../common/src/constants"
 import { checkJsonModuleAvailability } from "./check-json-module.ts"
+import { type ConnectionDetails } from "./actions/connection.ts"
 
 export async function connectToValkey(
   ws: WebSocket,
   payload: {
-    host: string;
-    port: number;
-    username: string,
-    password: string,
+    connectionDetails: ConnectionDetails
     connectionId: string;
   },
   clients: Map<string, GlideClient | GlideClusterClient>,
@@ -21,14 +19,14 @@ export async function connectToValkey(
 
   const addresses = [
     {
-      host: payload.host,
-      port: payload.port,
+      host: payload.connectionDetails.host,
+      port: Number(payload.connectionDetails.port),
     },
   ]
   const credentials: ServerCredentials | undefined = 
-    payload.password ? {
-      username: payload.username,
-      password: payload.password,
+    payload.connectionDetails.password ? {
+      username: payload.connectionDetails.username,
+      password: payload.connectionDetails.password,
     } : undefined
 
   try {
@@ -37,6 +35,7 @@ export async function connectToValkey(
     const standaloneClient = await GlideClient.createClient({
       addresses,
       credentials,
+      useTLS: payload.connectionDetails.tls,
       requestTimeout: 5000,
       clientName: "test_client",
     })
@@ -49,15 +48,13 @@ export async function connectToValkey(
     if (await belongsToCluster(standaloneClient)) {
       return connectToCluster(standaloneClient, ws, clients, payload, addresses, credentials, keyEvictionPolicy, jsonModuleAvailable)
     }
+    // Need to repeat connection info for metrics server
     const connectionInfo = {
       type: VALKEY.CONNECTION.standaloneConnectFulfilled,
       payload: {
         connectionId: payload.connectionId,
         connectionDetails: {
-          host: payload.host,
-          port: payload.port,
-          username: payload.username,
-          password: payload.password,
+          ...payload.connectionDetails,
           keyEvictionPolicy,
           jsonModuleAvailable,
         },
@@ -93,7 +90,7 @@ async function belongsToCluster(client: GlideClient): Promise<boolean> {
   return parsed["cluster_enabled"] === "1"
 }
 
-async function discoverCluster(client: GlideClient) {
+async function discoverCluster(client: GlideClient, credentials: ServerCredentials | undefined, tls: boolean)  {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await client.customCommand(["CLUSTER", "SLOTS"]) as any[][]
@@ -115,6 +112,11 @@ async function discoverCluster(client: GlideClient) {
         acc[primaryKey] = {
           host: primaryHost,
           port: primaryPort,
+          ...(credentials && {
+            username: credentials.username,
+            password: credentials.password,
+          }),
+          tls,
           replicas: [],
         }
       }
@@ -131,6 +133,9 @@ async function discoverCluster(client: GlideClient) {
     }, {} as Record<string, {
       host: string;
       port: number;
+      username?: string, 
+      password?: string,
+      tls: boolean,
       replicas: { id: string; host: string; port: number }[];
     }>)
 
@@ -146,14 +151,14 @@ async function connectToCluster(
   standaloneClient: GlideClient,
   ws: WebSocket,
   clients: Map<string, GlideClient | GlideClusterClient>,
-  payload: { host: string; port: number; connectionId: string;},
-  addresses: { host: string, port: number | undefined }[],
+  payload: { connectionDetails: ConnectionDetails, connectionId: string;},
+  addresses: { host: string, port: number }[],
   credentials: ServerCredentials | undefined,
   keyEvictionPolicy: KeyEvictionPolicy,
   jsonModuleAvailable: boolean,
 ) {
   standaloneClient.customCommand(["CONFIG", "SET", "cluster-announce-hostname", addresses[0].host])
-  const { clusterNodes, clusterId } = await discoverCluster(standaloneClient)
+  const { clusterNodes, clusterId } = await discoverCluster(standaloneClient, credentials, payload.connectionDetails.tls)
   if (R.isEmpty(clusterNodes)) {
     throw new Error("No cluster nodes discovered")
   }
@@ -167,6 +172,7 @@ async function connectToCluster(
   const clusterClient = await GlideClusterClient.createClient({
     addresses,
     credentials,
+    useTLS: payload.connectionDetails.tls,
     requestTimeout: 5000,
     clientName: "cluster_client",
   })
@@ -202,13 +208,13 @@ async function connectToCluster(
 }
 
 export async function returnIfDuplicateConnection(
-  payload:{connectionId: string, host: string, port: number}, 
+  payload:{connectionId: string, connectionDetails: ConnectionDetails}, 
   clients: Map<string, GlideClient | GlideClusterClient>,
   ws: WebSocket) 
 {
-  const resolvedAddresses = (await resolveHostnameOrIpAddress(payload.host)).addresses
+  const resolvedAddresses = (await resolveHostnameOrIpAddress(payload.connectionDetails.host)).addresses
   console.log("Resolved addresses: ", resolvedAddresses)
-  if (resolvedAddresses.some((address) => clients.has(sanitizeUrl(`${address}:${payload.port}`)))) {
+  if (resolvedAddresses.some((address) => clients.has(sanitizeUrl(`${address}:${payload.connectionDetails.port}`)))) {
     return ws.send(
       JSON.stringify({
         type: VALKEY.CONNECTION.standaloneConnectFulfilled,
