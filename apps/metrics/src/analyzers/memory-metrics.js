@@ -96,12 +96,12 @@ export const finalizeDownsample = ({ maxPoints = 120 } = {}) => (acc) => {
   return acc
 }
 
-const memoryFold = ({ maxPoints = 120 } = {}) => ({
+const memoryFold = ({ maxPoints } = {}) => ({
   seed: seed(),
   filterFn,
   mapFn,
   reducer,
-  finalize: finalizeDownsample({ maxPoints }),
+  finalize: R.isNil(maxPoints) ? R.identity : finalizeDownsample({ maxPoints }),
 })
 
 export default memoryFold

@@ -1,6 +1,5 @@
 import fs from "node:fs"
 import express from "express"
-import * as R from "ramda"
 import { createClient } from "@valkey/client"
 import { getConfig, updateConfig } from "./config.js"
 import * as Streamer from "./effects/ndjson-streamer.js"
@@ -11,6 +10,7 @@ import { calculateHotKeysFromHotSlots } from "./analyzers/calculate-hot-keys.js"
 import { enrichHotKeys } from "./analyzers/enrich-hot-keys.js"
 import cpuFold from "./analyzers/calculate-cpu-usage.js"
 import memoryFold from "./analyzers/memory-metrics.js"
+import { cpuQuerySchema, memoryQuerySchema, parseQuery } from "./api-schema.js"
 
 async function main() {
   const cfg = getConfig()
@@ -31,12 +31,14 @@ async function main() {
 
   const app = express()
   app.use(express.json())
-  // public API goes here:
-  app.get("/health", (_req, res) => res.json({ ok: true }))
 
-  app.get("/memory", async (_req, res) => {
+  // public API goes here:
+  app.get("/health", (req, res) => res.json({ ok: true }))
+
+  app.get("/memory", async (req, res) => {
     try {
-      const series = await Streamer.memory_stats(memoryFold({ maxPoints: 120 }))
+      const { maxPoints, since } = parseQuery(memoryQuerySchema)(req.query)
+      const series = await Streamer.memory_stats(memoryFold({ maxPoints, since }))
       res.json(series)
     } catch (e) {
       console.log(e)
@@ -44,19 +46,10 @@ async function main() {
     }
   })
 
-  app.get("/cpu", async (_req, res) => {
+  app.get("/cpu", async (req, res) => {
     try {
-      const tolerance = R.pipe(
-        R.pathOr("0.025", ["query", "tolerance"]),
-        Number,
-        Math.abs, // no negative numbers
-        R.when( // when not a number or more than 20% — default to 2.5% tolerance interval
-          R.either(Number.isNaN, R.lte(0.2)),
-          R.always(0.025),
-        ),
-      )(_req)
-
-      const series = await Streamer.info_cpu(cpuFold({ tolerance }))
+      const { tolerance, since } = parseQuery(cpuQuerySchema)(req.query)
+      const series = await Streamer.info_cpu(cpuFold({ tolerance, since }))
       res.json(series)
     } catch (e) {
       res.status(500).json({ error: e.message })
@@ -65,7 +58,7 @@ async function main() {
 
   app.get("/commandlog", getCommandLogs)
 
-  app.get("/slowlog_len", async (_req, res) => {
+  app.get("/slowlog_len", async (req, res) => {
     try {
       const rows = await Streamer.slowlog_len()
       res.json({ rows })

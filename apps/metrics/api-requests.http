@@ -16,10 +16,45 @@ Accept: application/json
 # MEMORY
 #####################################################################
 
-### Memory stats (ndjson streamer-backed)
+### Memory stats — all data
 GET {{baseUrl}}/memory
 Accept: application/json
 
+###
+
+### Memory stats — last hour
+< {%
+  request.variables.set("since", String(Date.now() - 60 * 60 * 1000))
+%}
+GET {{baseUrl}}/memory?since={{since}}
+Accept: application/json
+
+###
+
+### Memory stats — last hour, downsampled to 10 points
+< {%
+  request.variables.set("since", String(Date.now() - 60 * 60 * 1000))
+%}
+GET {{baseUrl}}/memory?since={{since}}&maxPoints=10
+Accept: application/json
+
+###
+
+### Memory stats — last 6 hours, downsampled to 10 points
+< {%
+  request.variables.set("since", String(Date.now() - 6 * 60 * 60 * 1000))
+%}
+GET {{baseUrl}}/memory?since={{since}}&maxPoints=10
+Accept: application/json
+
+###
+
+### Memory stats — last 24 hours, downsampled to 120 points
+< {%
+  request.variables.set("since", String(Date.now() - 24 * 60 * 60 * 1000))
+%}
+GET {{baseUrl}}/memory?since={{since}}&maxPoints=120
+Accept: application/json
 
 #####################################################################
 # CPU
@@ -29,8 +64,10 @@ Accept: application/json
 GET {{baseUrl}}/cpu
 Accept: application/json
 
+###
+
 ### CPU series with explicit tolerance (e.g. 1%)
-GET {{baseUrl}}/cpu?tolerance=0.01
+GET {{baseUrl}}/cpu?tolerance=0.3
 Accept: application/json
 
 #####################################################################
