@@ -13,7 +13,7 @@ import {
   CircleX,
   CircleQuestionMark
 } from "lucide-react"
-import { calculateHitRatio } from "@common/src/cache_hit_ratio"
+import { calculateHitRatio } from "@common/src/cache-hit-ratio"
 import { AppHeader } from "./ui/app-header"
 import AddNewKey from "./ui/add-key"
 import KeyDetails from "./ui/key-details"
