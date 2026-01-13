@@ -48,8 +48,8 @@ async function main() {
 
   app.get("/cpu", async (req, res) => {
     try {
-      const { tolerance, since } = parseQuery(cpuQuerySchema)(req.query)
-      const series = await Streamer.info_cpu(cpuFold({ tolerance, since }))
+      const { maxPoints, tolerance, since, until } = parseQuery(cpuQuerySchema)(req.query)
+      const series = await Streamer.info_cpu(cpuFold({ maxPoints, tolerance, since, until }))
       res.json(series)
     } catch (e) {
       res.status(500).json({ error: e.message })

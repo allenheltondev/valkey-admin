@@ -28,7 +28,7 @@ export const parseCommandLogs = (entries, commandLogType) =>
 
 // Min–max downsampling reduces a time series to at most `maxPoints` by splitting the time range into equal buckets
 // and keeping only the minimum and maximum value from each bucket to preserve spikes.
-export function downsampleMinMaxOrdered(series, { maxPoints = 120 } = {}) {
+export const downsampleMinMaxOrdered = R.curry(({ maxPoints }, series) => {
   if (!series?.length) return []
   if (series.length <= maxPoints) return series // no need to downsample
 
@@ -67,5 +67,4 @@ export function downsampleMinMaxOrdered(series, { maxPoints = 120 } = {}) {
   out.push(last)
 
   return out
-}
-
+})

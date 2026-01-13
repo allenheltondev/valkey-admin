@@ -12,8 +12,8 @@ const parseOptionalNum =
       let n = Number(raw)
       if (!Number.isFinite(n)) return undefined // isFinite takes care of NaN, so no need to check for it again
 
-      if (abs) n = Math.abs(n)
-      if (int) n = Math.trunc(n)
+      n = abs ? Math.abs(n) : n
+      n = int ? Math.trunc(n) : n
 
       return n
     }
@@ -49,13 +49,14 @@ export const parseQuery = (schema) =>
   )
 
 export const memoryQuerySchema = z.object({
+  maxPoints: optionalInt({ min: 4, max: 600, abs: true }),
   since: optionalInt(),
   until: optionalInt(),
-  maxPoints: optionalInt({ min: 4, max: 600, abs: true }),
 })
 
 export const cpuQuerySchema = z.object({
-  tolerance: optionalNumber({ min: 0, max: 0.2, abs: true }),
+  maxPoints: optionalInt({ min: 4, max: 600, abs: true }),
+  tolerance: optionalNumber({ min: 0, max: 0.3, abs: true }),
   since: optionalInt(),
   until: optionalInt(),
 })

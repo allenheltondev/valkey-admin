@@ -70,6 +70,35 @@ Accept: application/json
 GET {{baseUrl}}/cpu?tolerance=0.3
 Accept: application/json
 
+###
+
+### CPU series since last hour
+< {%
+  request.variables.set("since", String(Date.now() -  60 * 60 * 1000))
+%}
+GET {{baseUrl}}/cpu?since={{since}}
+Accept: application/json
+
+###
+
+### CPU series for the last hour with downsampling
+< {%
+  request.variables.set("since", String(Date.now() - 60 * 60 * 1000))
+%}
+GET {{baseUrl}}/cpu?since={{since}}&maxPoints=10
+Accept: application/json
+
+###
+
+### CPU series with everything combined -12..-2 hours 10 points with 0.25 tolerance
+< {%
+  const now = Date.now()
+  request.variables.set("since", String(now - 12 * 60 * 60 * 1000))
+  request.variables.set("until", String(now - 2 * 60 * 60 * 1000))
+%}
+GET {{baseUrl}}/cpu?since={{since}}&until={{until}}&maxPoints=10&tolerance=0.25
+Accept: application/json
+
 #####################################################################
 # COMMAND LOG
 #####################################################################

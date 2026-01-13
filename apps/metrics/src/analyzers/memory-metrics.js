@@ -96,7 +96,7 @@ const reducer = (acc, point) =>
 
 export const finalizeDownsample = ({ maxPoints = 120 } = {}) => (acc) => {
   for (const key of Object.keys(acc)) {
-    acc[key].series = downsampleMinMaxOrdered(acc[key].series, { maxPoints })
+    acc[key].series = downsampleMinMaxOrdered({ maxPoints }, acc[key].series)
   }
   return acc
 }
