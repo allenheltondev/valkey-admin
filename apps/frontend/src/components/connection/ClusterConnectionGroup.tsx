@@ -142,11 +142,12 @@ export const ClusterConnectionGroup = ({ clusterId, connections, onEdit }: Clust
                       <TooltipTrigger asChild>
                         <div className="min-w-0 flex-1 overflow-hidden max-w-[200px]">
                           <Link
-                            className="block font-mono text-sm text-blue-600 dark:text-blue-400 hover:underline w-full overflow-hidden text-ellipsis whitespace-nowrap"
+                            className="block font-mono text-sm text-blue-600 dark:text-blue-400 hover:underline"
                             style={{
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
+                              display: "block"
                             }}
                             title={firstNodeAlias || clusterId}
                             to={`/${clusterId}/${firstConnectedConnection.connectionId}/cluster-topology`}
@@ -162,12 +163,13 @@ export const ClusterConnectionGroup = ({ clusterId, connections, onEdit }: Clust
                   ) : (
                     <div className="min-w-0 flex-1 overflow-hidden max-w-[200px]">
                       <h3
-                        className="font-mono text-sm text-gray-900 dark:text-white cursor-pointer w-full overflow-hidden text-ellipsis whitespace-nowrap"
+                        className="font-mono text-sm text-gray-900 dark:text-white cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap"
                         onClick={() => setIsOpen(!isOpen)}
                         style={{
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
+                          display: "block"
                         }}
                         title={firstNodeAlias || clusterId}
                       >
