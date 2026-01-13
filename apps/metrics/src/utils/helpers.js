@@ -35,7 +35,7 @@ export function downsampleMinMaxOrdered(series, { maxPoints = 120 } = {}) {
   const [first, last] = R.juxt([R.head, R.last])(series)
 
   // Total duration of the time range
-  const timespan = last.timestamp - first.timestamp
+  const timespan = last.timestamp - first.timestamp || 1 // so it's not 0 just in case
 
   // Output size is: 2 + 2 * bucketCount (first + last + min/max per bucket)
   const bucketCount = Math.max(1, Math.floor((maxPoints - 2) / 2))

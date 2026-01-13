@@ -37,8 +37,8 @@ async function main() {
 
   app.get("/memory", async (req, res) => {
     try {
-      const { maxPoints, since } = parseQuery(memoryQuerySchema)(req.query)
-      const series = await Streamer.memory_stats(memoryFold({ maxPoints, since }))
+      const { maxPoints, since, until } = parseQuery(memoryQuerySchema)(req.query)
+      const series = await Streamer.memory_stats(memoryFold({ maxPoints, since, until }))
       res.json(series)
     } catch (e) {
       console.log(e)

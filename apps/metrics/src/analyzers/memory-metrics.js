@@ -67,7 +67,12 @@ const seed = () =>
     return acc
   }, {})
 
-const filterFn = ({ metric }) => allowedRawMetrics.has(metric)
+const filterFn =
+  ({ since, until } = {}) =>
+    ({ metric, ts }) =>
+      allowedRawMetrics.has(metric) &&
+      (R.isNil(since) || Number(ts) >= Number(since)) &&
+      (R.isNil(until) || Number(ts) <= Number(until))
 
 const mapFn = ({ ts, metric, value }) =>
   R.pipe(
@@ -96,9 +101,9 @@ export const finalizeDownsample = ({ maxPoints = 120 } = {}) => (acc) => {
   return acc
 }
 
-const memoryFold = ({ maxPoints } = {}) => ({
+const memoryFold = ({ maxPoints, since, until } = {}) => ({
   seed: seed(),
-  filterFn,
+  filterFn: filterFn({ since, until }),
   mapFn,
   reducer,
   finalize: R.isNil(maxPoints) ? R.identity : finalizeDownsample({ maxPoints }),
