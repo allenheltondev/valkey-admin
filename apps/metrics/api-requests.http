@@ -100,14 +100,3 @@ Accept: application/json
     "url": "valkey://localhost:6379"
   }
 }
-
-### Update config (intentionally invalid example)
-POST {{baseUrl}}/update-config
-Content-Type: application/json
-Accept: application/json
-
-{
-  "server": {
-    "port": "not-a-number"
-  }
-}

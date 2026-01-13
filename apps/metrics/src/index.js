@@ -10,6 +10,7 @@ import { monitorHandler, useMonitor } from "./handlers/monitor-handler.js"
 import { calculateHotKeysFromHotSlots } from "./analyzers/calculate-hot-keys.js"
 import { enrichHotKeys } from "./analyzers/enrich-hot-keys.js"
 import cpuFold from "./analyzers/calculate-cpu-usage.js"
+import memoryFold from "./analyzers/memory-metrics.js"
 
 async function main() {
   const cfg = getConfig()
@@ -35,7 +36,7 @@ async function main() {
 
   app.get("/memory", async (_req, res) => {
     try {
-      const rows = await Streamer.memory_stats()
+      const rows = await Streamer.memory_stats(memoryFold)
       res.json({ rows })
     } catch (e) {
       res.status(500).json({ error: e.message })
