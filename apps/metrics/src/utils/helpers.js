@@ -1,4 +1,5 @@
 import * as R from "ramda"
+import { COMMANDLOG_TYPE } from "../utils/constants.js"
 
 export const ymd = (d) => {
   const y = d.getFullYear()
@@ -18,7 +19,7 @@ export const parseCommandLogs = (entries, commandLogType) =>
   ] = []) => ({
     id: String(id),
     ts: Number(tsSec) * 1000,
-    ...(commandLogType === "slow"
+    ...(commandLogType === COMMANDLOG_TYPE.SLOW
       ? { duration_us: Number(metricValue) }
       : { size: Number(metricValue) }),
     argv: Array.isArray(argv) ? argv.map(String) : [],
