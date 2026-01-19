@@ -20,9 +20,9 @@ export function CustomTooltip({ children, content, description, unit, side }: Cu
       {content &&
         <TooltipContent
           align="center"
-          sideOffset={2}
           className={"bg-tw-primary text-white px-2 py-1 rounded text-xs font-light z-10"}
           side={side || "bottom"}
+          sideOffset={2}
         >
           <p>{content}</p>
         </TooltipContent>
