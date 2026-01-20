@@ -4,12 +4,14 @@ import * as Streamer from "../effects/ndjson-streamer.js"
 const getCommandLogRows = async (commandlogType, count) => {
   try {
     switch (commandlogType) {
-      case COMMANDLOG_TYPE.SLOW:
-        return Streamer.commandlog_slow({ limit: count })
+      case COMMANDLOG_TYPE.SLOW: {
+        const rows = await Streamer.commandlog_slow({ limit: count })
+        return rows
+      }
       case COMMANDLOG_TYPE.LARGE_REQUEST:
-        return Streamer.commandlog_large_request({ limit: count })
+        return await Streamer.commandlog_large_request({ limit: count })
       case COMMANDLOG_TYPE.LARGE_REPLY:
-        return Streamer.commandlog_large_reply({ limit: count })
+        return await Streamer.commandlog_large_reply({ limit: count })
       default:
         throw new Error(`Unknown commandlog type: ${commandlogType}`)
     }
