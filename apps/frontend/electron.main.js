@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-const { app, BrowserWindow } = require("electron")
+const { app, BrowserWindow, shell } = require("electron")
 const path = require("path")
 const { fork } = require("child_process")
 
@@ -130,6 +130,12 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
+  })
+
+  // Open external links in default browser
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url)
+    return { action: "deny" }
   })
 
   if (app.isPackaged) {
