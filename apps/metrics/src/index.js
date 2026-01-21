@@ -24,17 +24,17 @@ async function main() {
       port: Number(process.env.VALKEY_PORT),
     },
   ]
-  const credentials = 
+  const credentials =
     process.env.VALKEY_PASSWORD ? {
       username: process.env.VALKEY_USERNAME,
       password: process.env.VALKEY_PASSWORD,
     } : undefined
-    
+
   const client = await GlideClient.createClient({
     addresses,
     credentials,
     useTLS: process.env.VALKEY_TLS === "true" ? true : false,
-    ...(process.env.VALKEY_VERIFY_CERT === "false" && {
+    ...(process.env.VALKEY_TLS === "true" && process.env.VALKEY_VERIFY_CERT === "false" && {
       advancedConfiguration: {
         tlsAdvancedConfiguration: {
           insecure: true,
@@ -44,7 +44,7 @@ async function main() {
 
     requestTimeout: 5000,
     clientName: "test_client",
-  })  
+  })
 
   const stoppers = await setupCollectors(client, cfg)
 
@@ -95,7 +95,7 @@ async function main() {
     if (req.query.useHotSlots === "true"){
       const hotKeys = await calculateHotKeysFromHotSlots(client, req.query.count).then(enrichHotKeys(client))
       return res.json({ hotKeys })
-    } 
+    }
     else useMonitor(req, res, cfg, client)
   })
 
@@ -108,7 +108,7 @@ async function main() {
       return res.status(500).json( {
         success: false,
         message: error instanceof Error ? error.message : String(error),
-        data: error }) 
+        data: error })
     }
   })
 

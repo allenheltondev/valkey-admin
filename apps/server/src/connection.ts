@@ -23,7 +23,7 @@ export async function connectToValkey(
       port: Number(payload.connectionDetails.port),
     },
   ]
-  const credentials: ServerCredentials | undefined = 
+  const credentials: ServerCredentials | undefined =
     payload.connectionDetails.password ? {
       username: payload.connectionDetails.username,
       password: payload.connectionDetails.password,
@@ -36,7 +36,7 @@ export async function connectToValkey(
       addresses,
       credentials,
       useTLS: payload.connectionDetails.tls,
-      ...(payload.connectionDetails.verifyTlsCertificate === false && {
+      ...(payload.connectionDetails.tls && payload.connectionDetails.verifyTlsCertificate === false && {
         advancedConfiguration: {
           tlsAdvancedConfiguration: {
             insecure: true,
@@ -48,11 +48,11 @@ export async function connectToValkey(
       clientName: "test_client",
     })
     clients.set(payload.connectionId, standaloneClient)
-    
+
     const evictionPolicyResponse = await standaloneClient.customCommand(["CONFIG", "GET", "maxmemory-policy"]) as [{key: string, value: string}]
     const keyEvictionPolicy: KeyEvictionPolicy = evictionPolicyResponse[0].value.toLowerCase() as KeyEvictionPolicy
     const jsonModuleAvailable = await checkJsonModuleAvailability(standaloneClient)
-    
+
     if (await belongsToCluster(standaloneClient)) {
       return connectToCluster(standaloneClient, ws, clients, payload, addresses, credentials, keyEvictionPolicy, jsonModuleAvailable)
     }
@@ -145,7 +145,7 @@ async function discoverCluster(client: GlideClient, payload: {
     }, {} as Record<string, {
       host: string;
       port: number;
-      username?: string, 
+      username?: string,
       password?: string,
       tls: boolean,
       verifyTlsCertificate: boolean,
@@ -155,8 +155,8 @@ async function discoverCluster(client: GlideClient, payload: {
     return { clusterNodes, clusterId }
   } catch (err) {
     console.error("Error discovering cluster:", err)
-    throw new Error("Failed to discover cluster") 
-    
+    throw new Error("Failed to discover cluster")
+
   }
 }
 
@@ -186,7 +186,7 @@ async function connectToCluster(
     addresses,
     credentials,
     useTLS: payload.connectionDetails.tls,
-    ...(payload.connectionDetails.verifyTlsCertificate === false && {
+    ...(payload.connectionDetails.tls && payload.connectionDetails.verifyTlsCertificate === false && {
       advancedConfiguration: {
         tlsAdvancedConfiguration: {
           insecure: true,
@@ -204,7 +204,7 @@ async function connectToCluster(
   const clusterSlotStatsResponse = await clusterClient.customCommand(
     ["CONFIG", "GET", "cluster-slot-stats-enabled"],
   ) as [Record<string, string>]
-  const clusterSlotStatsEnabled = clusterSlotStatsResponse[0].value === "yes" 
+  const clusterSlotStatsEnabled = clusterSlotStatsResponse[0].value === "yes"
   const clusterConnectionInfo = {
     type: VALKEY.CONNECTION.clusterConnectFulfilled,
     payload: {
@@ -228,9 +228,9 @@ async function connectToCluster(
 }
 
 export async function returnIfDuplicateConnection(
-  payload:{connectionId: string, connectionDetails: ConnectionDetails}, 
+  payload:{connectionId: string, connectionDetails: ConnectionDetails},
   clients: Map<string, GlideClient | GlideClusterClient>,
-  ws: WebSocket) 
+  ws: WebSocket)
 {
   const resolvedAddresses = (await resolveHostnameOrIpAddress(payload.connectionDetails.host)).addresses
   if (resolvedAddresses.some((address) => clients.has(sanitizeUrl(`${address}:${payload.connectionDetails.port}`)))) {

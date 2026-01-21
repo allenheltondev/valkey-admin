@@ -9,7 +9,7 @@ interface AutocompleteDropdownProps {
   isLoading: boolean;
   onSelect: (command: ValkeyCommand) => void;
   onClose: () => void;
-  inputRef: React.RefObject<HTMLTextAreaElement>;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 interface CommandSuggestionProps {
@@ -22,7 +22,6 @@ interface CommandSuggestionProps {
 function CommandSuggestion({ matchResult, isSelected, onClick, optionId }: CommandSuggestionProps) {
   const { command, highlightRanges } = matchResult
 
-  // Create highlighted text for command name with improved accessibility
   const highlightText = (text: string, ranges: Array<[number, number]>) => {
     if (ranges.length === 0) return text
 
@@ -30,12 +29,10 @@ function CommandSuggestion({ matchResult, isSelected, onClick, optionId }: Comma
     let lastIndex = 0
 
     ranges.forEach(([start, end], index) => {
-      // Add text before highlight
       if (start > lastIndex) {
         parts.push(text.substring(lastIndex, start))
       }
 
-      // Add highlighted text with improved accessibility
       parts.push(
         <span
           aria-label={`Matched text: ${text.substring(start, end)}`}
@@ -49,7 +46,6 @@ function CommandSuggestion({ matchResult, isSelected, onClick, optionId }: Comma
       lastIndex = end
     })
 
-    // Add remaining text
     if (lastIndex < text.length) {
       parts.push(text.substring(lastIndex))
     }
@@ -105,46 +101,6 @@ export function AutocompleteDropdown({
   const dropdownId = "valkey-autocomplete-dropdown"
   const activeDescendantId = selectedIndex >= 0 ? `${dropdownId}-option-${selectedIndex}` : undefined
 
-  // Handle keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isVisible) return
-
-      switch (event.key) {
-        case "Escape":
-          event.preventDefault()
-          onClose()
-          if (inputRef.current) {
-            inputRef.current.focus()
-          }
-          break
-        case "ArrowDown":
-        case "ArrowUp":
-        case "Home":
-        case "End":
-          event.preventDefault()
-          break
-        case "Enter":
-        case "Tab":
-          if (suggestions.length > 0 && selectedIndex >= 0) {
-            event.preventDefault()
-            event.stopPropagation()
-            onSelect(suggestions[selectedIndex].command)
-          }
-          break
-      }
-    }
-
-    if (isVisible) {
-      document.addEventListener("keydown", handleKeyDown, { capture: true })
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown, { capture: true })
-    }
-  }, [isVisible, suggestions, selectedIndex, onSelect, onClose, inputRef])
-
-  // Handle clicks outside dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -159,14 +115,10 @@ export function AutocompleteDropdown({
 
     if (isVisible) {
       document.addEventListener("mousedown", handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
+      return () => document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [isVisible, onClose, inputRef])
 
-  // Scroll selected item into view
   useEffect(() => {
     if (selectedItemRef.current) {
       selectedItemRef.current.scrollIntoView({
