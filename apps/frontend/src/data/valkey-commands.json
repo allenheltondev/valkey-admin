@@ -4,7 +4,7 @@
     "syntax": "PING",
     "category": "connection",
     "description": "Test server connectivity",
-    "tier": "default",
+    "tier": "read",
     "parameters": []
   },
   {
@@ -12,7 +12,7 @@
     "syntax": "INFO [section]",
     "category": "server",
     "description": "Get server information and statistics",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "section",
@@ -27,7 +27,7 @@
     "syntax": "TYPE key",
     "category": "generic",
     "description": "Determine the type stored at key",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -42,7 +42,7 @@
     "syntax": "GET key",
     "category": "string",
     "description": "Get the value of a key",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -57,7 +57,7 @@
     "syntax": "MGET key [key ...]",
     "category": "string",
     "description": "Get values of multiple keys",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -73,7 +73,7 @@
     "syntax": "STRLEN key",
     "category": "string",
     "description": "Get string value length",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -88,7 +88,7 @@
     "syntax": "GETRANGE key start end",
     "category": "string",
     "description": "Get substring of string value",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -115,7 +115,7 @@
     "syntax": "TTL key",
     "category": "generic",
     "description": "Get time to live in seconds",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -130,7 +130,7 @@
     "syntax": "PTTL key",
     "category": "generic",
     "description": "Get time to live in milliseconds",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -145,7 +145,7 @@
     "syntax": "KEYS pattern",
     "category": "generic",
     "description": "Find keys matching pattern (use SCAN for production)",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "pattern",
@@ -160,7 +160,7 @@
     "syntax": "DBSIZE",
     "category": "server",
     "description": "Get total number of keys",
-    "tier": "default",
+    "tier": "read",
     "parameters": []
   },
   {
@@ -168,7 +168,7 @@
     "syntax": "MEMORY USAGE key",
     "category": "server",
     "description": "Get memory usage of key in bytes",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -183,7 +183,7 @@
     "syntax": "EXISTS key [key ...]",
     "category": "generic",
     "description": "Check if keys exist",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -199,7 +199,7 @@
     "syntax": "SCAN cursor [MATCH pattern] [COUNT count] [TYPE type]",
     "category": "scan",
     "description": "Incrementally iterate keys",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "cursor",
@@ -232,7 +232,7 @@
     "syntax": "HGET key field",
     "category": "hash",
     "description": "Get hash field value",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -253,7 +253,7 @@
     "syntax": "HGETALL key",
     "category": "hash",
     "description": "Get all hash fields and values",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -268,7 +268,7 @@
     "syntax": "HKEYS key",
     "category": "hash",
     "description": "Get all hash field names",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -283,7 +283,7 @@
     "syntax": "HVALS key",
     "category": "hash",
     "description": "Get all hash values",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -298,7 +298,7 @@
     "syntax": "HLEN key",
     "category": "hash",
     "description": "Get number of hash fields",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -313,7 +313,7 @@
     "syntax": "HEXISTS key field",
     "category": "hash",
     "description": "Check if hash field exists",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -334,7 +334,7 @@
     "syntax": "HMGET key field [field ...]",
     "category": "hash",
     "description": "Get multiple hash field values",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -356,7 +356,7 @@
     "syntax": "HSCAN key cursor [MATCH pattern] [COUNT count]",
     "category": "hash",
     "description": "Incrementally iterate hash fields",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -389,7 +389,7 @@
     "syntax": "LRANGE key start stop",
     "category": "list",
     "description": "Get list elements by range",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -416,7 +416,7 @@
     "syntax": "LLEN key",
     "category": "list",
     "description": "Get list length",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -431,7 +431,7 @@
     "syntax": "LINDEX key index",
     "category": "list",
     "description": "Get list element by index",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -452,7 +452,7 @@
     "syntax": "SISMEMBER key member",
     "category": "set",
     "description": "Check if member exists in set",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -473,7 +473,7 @@
     "syntax": "SMEMBERS key",
     "category": "set",
     "description": "Get all set members",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -488,7 +488,7 @@
     "syntax": "SCARD key",
     "category": "set",
     "description": "Get set cardinality",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -503,7 +503,7 @@
     "syntax": "SINTER key [key ...]",
     "category": "set",
     "description": "Get intersection of sets",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -519,7 +519,7 @@
     "syntax": "SDIFF key [key ...]",
     "category": "set",
     "description": "Get difference between sets",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -535,7 +535,7 @@
     "syntax": "SUNION key [key ...]",
     "category": "set",
     "description": "Get union of sets",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -551,7 +551,7 @@
     "syntax": "SSCAN key cursor [MATCH pattern] [COUNT count]",
     "category": "set",
     "description": "Incrementally iterate set members",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -584,7 +584,7 @@
     "syntax": "ZSCORE key member",
     "category": "sorted_set",
     "description": "Get member score in sorted set",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -605,7 +605,7 @@
     "syntax": "ZCARD key",
     "category": "sorted_set",
     "description": "Get sorted set cardinality",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -620,7 +620,7 @@
     "syntax": "ZCOUNT key min max",
     "category": "sorted_set",
     "description": "Count members in score range",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -647,7 +647,7 @@
     "syntax": "ZRANK key member",
     "category": "sorted_set",
     "description": "Get member rank (low to high)",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -668,7 +668,7 @@
     "syntax": "ZREVRANK key member",
     "category": "sorted_set",
     "description": "Get member rank (high to low)",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -689,7 +689,7 @@
     "syntax": "ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]",
     "category": "sorted_set",
     "description": "Get members by score range",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -716,7 +716,7 @@
     "syntax": "ZRANGE key start stop [WITHSCORES]",
     "category": "sorted_set",
     "description": "Get sorted set range by index",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -743,7 +743,7 @@
     "syntax": "ZREVRANGE key start stop [WITHSCORES]",
     "category": "sorted_set",
     "description": "Get sorted set range in reverse",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -770,7 +770,7 @@
     "syntax": "ZSCAN key cursor [MATCH pattern] [COUNT count]",
     "category": "sorted_set",
     "description": "Incrementally iterate sorted set",
-    "tier": "default",
+    "tier": "read",
     "parameters": [
       {
         "name": "key",
@@ -803,7 +803,7 @@
     "syntax": "SET key value",
     "category": "string",
     "description": "Set key to hold string value",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -824,7 +824,7 @@
     "syntax": "APPEND key value",
     "category": "string",
     "description": "Append value to string",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -845,7 +845,7 @@
     "syntax": "UNLINK key [key ...]",
     "category": "generic",
     "description": "Delete keys asynchronously (safer than DEL)",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -861,7 +861,7 @@
     "syntax": "DEL key [key ...]",
     "category": "generic",
     "description": "Delete keys synchronously",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -877,7 +877,7 @@
     "syntax": "EXPIRE key seconds",
     "category": "generic",
     "description": "Set key expiration in seconds",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -898,7 +898,7 @@
     "syntax": "PEXPIRE key milliseconds",
     "category": "generic",
     "description": "Set key expiration in milliseconds",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -919,7 +919,7 @@
     "syntax": "PERSIST key",
     "category": "generic",
     "description": "Remove key expiration",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -934,7 +934,7 @@
     "syntax": "RENAME key newkey",
     "category": "generic",
     "description": "Rename a key",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -955,7 +955,7 @@
     "syntax": "HSET key field value [field value ...]",
     "category": "hash",
     "description": "Set hash field values",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -982,7 +982,7 @@
     "syntax": "HDEL key field [field ...]",
     "category": "hash",
     "description": "Delete hash fields",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1004,7 +1004,7 @@
     "syntax": "LPUSH key element [element ...]",
     "category": "list",
     "description": "Prepend elements to list",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1026,7 +1026,7 @@
     "syntax": "RPUSH key element [element ...]",
     "category": "list",
     "description": "Append elements to list",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1048,7 +1048,7 @@
     "syntax": "LREM key count element",
     "category": "list",
     "description": "Remove list elements",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1075,7 +1075,7 @@
     "syntax": "LTRIM key start stop",
     "category": "list",
     "description": "Trim list to specified range",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1102,7 +1102,7 @@
     "syntax": "LSET key index element",
     "category": "list",
     "description": "Set list element by index",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1129,7 +1129,7 @@
     "syntax": "SADD key member [member ...]",
     "category": "set",
     "description": "Add members to set",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1151,7 +1151,7 @@
     "syntax": "SREM key member [member ...]",
     "category": "set",
     "description": "Remove set members",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1173,7 +1173,7 @@
     "syntax": "SMOVE source destination member",
     "category": "set",
     "description": "Move member between sets",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "source",
@@ -1200,7 +1200,7 @@
     "syntax": "ZADD key score member [score member ...]",
     "category": "sorted_set",
     "description": "Add members to sorted set",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1227,7 +1227,7 @@
     "syntax": "ZREM key member [member ...]",
     "category": "sorted_set",
     "description": "Remove sorted set members",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1249,7 +1249,7 @@
     "syntax": "ZINCRBY key increment member",
     "category": "sorted_set",
     "description": "Increment member score",
-    "tier": "remediation",
+    "tier": "mutating",
     "parameters": [
       {
         "name": "key",
@@ -1332,3 +1332,4 @@
     "parameters": []
   }
 ]
+

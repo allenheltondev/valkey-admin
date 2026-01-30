@@ -1,55 +1,26 @@
+import { distance as levenshteinDistance } from "fastest-levenshtein"
 import type { ValkeyCommand, MatchResult } from "@/types/valkey-commands"
 import valkeyCommands from "@/data/valkey-commands.json"
 
-/**
- * Calculate Levenshtein distance between two strings
- */
-function levenshteinDistance(str1: string, str2: string): number {
-  const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null))
-
-  for (let i = 0; i <= str1.length; i++) {
-    matrix[0][i] = i
-  }
-
-  for (let j = 0; j <= str2.length; j++) {
-    matrix[j][0] = j
-  }
-
-  for (let j = 1; j <= str2.length; j++) {
-    for (let i = 1; i <= str1.length; i++) {
-      const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1
-      matrix[j][i] = Math.min(
-        matrix[j][i - 1] + 1, // deletion
-        matrix[j - 1][i] + 1, // insertion
-        matrix[j - 1][i - 1] + indicator, // substitution
-      )
-    }
-  }
-
-  return matrix[str2.length][str1.length]
-}
+const ALL_COMMANDS = valkeyCommands as ValkeyCommand[]
+const NON_ADMIN_COMMANDS = ALL_COMMANDS.filter((cmd) => cmd.tier !== "admin")
 
 /**
  * Find highlight ranges for matched text portions
  */
 function findHighlightRanges(text: string, query: string, matchType: "prefix" | "contains" | "fuzzy"): Array<[number, number]> {
-  const lowerText = text.toLowerCase()
-  const lowerQuery = query.toLowerCase()
+  const upperText = text.toUpperCase()
+  const upperQuery = query.toUpperCase()
 
-  if (matchType === "prefix" && lowerText.startsWith(lowerQuery)) {
+  if (matchType === "prefix" && upperText.startsWith(upperQuery)) {
     return [[0, query.length]]
   }
 
   if (matchType === "contains") {
-    const index = lowerText.indexOf(lowerQuery)
+    const index = upperText.indexOf(upperQuery)
     if (index !== -1) {
       return [[index, index + query.length]]
     }
-  }
-
-  // For fuzzy matches, we'll highlight the entire command name for simplicity
-  if (matchType === "fuzzy") {
-    return [[0, text.length]]
   }
 
   return []
@@ -67,32 +38,36 @@ export function matchCommands(query: string, maxResults: number = 10, adminMode:
   }
 
   const trimmedQuery = query.trim()
-  const lowerQuery = trimmedQuery.toLowerCase()
+  const upperQuery = trimmedQuery.toUpperCase()
   const results: MatchResult[] = []
 
-  // Cast the imported JSON to the correct type
-  const commands = getCommands({ adminMode })
+  const commands = adminMode ? ALL_COMMANDS : NON_ADMIN_COMMANDS
 
   for (const command of commands) {
-    const lowerCommandName = command.name.toLowerCase()
+    const commandName = command.name
     let matchType: "prefix" | "contains" | "fuzzy"
     let score: number
 
     // Exact prefix match (highest priority)
-    if (lowerCommandName.startsWith(lowerQuery)) {
+    if (commandName.startsWith(upperQuery)) {
       matchType = "prefix"
-      score = lowerQuery.length / lowerCommandName.length // Higher score for longer matches
+      score = upperQuery.length / commandName.length // Higher score for longer matches
     }
     // Contains match
-    else if (lowerCommandName.includes(lowerQuery)) {
+    else if (commandName.includes(upperQuery)) {
       matchType = "contains"
-      score = 0.5 + (lowerQuery.length / lowerCommandName.length) * 0.3
+      score = 0.5 + (upperQuery.length / commandName.length) * 0.3
     }
-    // Fuzzy match using Levenshtein distance
-    else {
-      const distance = levenshteinDistance(lowerQuery, lowerCommandName)
-      const maxLength = Math.max(lowerQuery.length, lowerCommandName.length)
-      const similarity = 1 - (distance / maxLength)
+    // Fuzzy match using Levenshtein distance (only for queries >= 3 chars)
+    else if (upperQuery.length >= 3) {
+      const maxLen = Math.max(upperQuery.length, commandName.length)
+      const lenDiff = Math.abs(upperQuery.length - commandName.length)
+
+      // Skip if length difference alone makes similarity threshold impossible
+      if (lenDiff > 0.4 * maxLen) continue
+
+      const distance = levenshteinDistance(upperQuery, commandName)
+      const similarity = 1 - (distance / maxLen)
 
       // Only include if similarity is above threshold (60%)
       if (similarity >= 0.6) {
@@ -101,6 +76,8 @@ export function matchCommands(query: string, maxResults: number = 10, adminMode:
       } else {
         continue // Skip this command
       }
+    } else {
+      continue // Skip if query too short for fuzzy matching
     }
 
     const highlightRanges = findHighlightRanges(command.name, trimmedQuery, matchType)
@@ -132,13 +109,6 @@ export function matchCommands(query: string, maxResults: number = 10, adminMode:
 }
 
 /**
- * Get all available commands (for reference)
- */
-export function getAllCommands(): ValkeyCommand[] {
-  return valkeyCommands as ValkeyCommand[]
-}
-
-/**
  * Get commands filtered by admin mode
  * @param options - Filter options
  * @param options.adminMode - Whether to include admin-tier commands (default: false)
@@ -146,14 +116,7 @@ export function getAllCommands(): ValkeyCommand[] {
  */
 export function getCommands(options: { adminMode?: boolean } = {}): ValkeyCommand[] {
   const { adminMode = false } = options
-  const commands = valkeyCommands as ValkeyCommand[]
-
-  if (adminMode) {
-    return commands // Return all commands including admin tier
-  }
-
-  // Return only default and remediation tier commands
-  return commands.filter((cmd) => cmd.tier === "default" || cmd.tier === "remediation")
+  return adminMode ? ALL_COMMANDS : NON_ADMIN_COMMANDS
 }
 
 /**
@@ -170,31 +133,4 @@ export function searchCommands(
 ): MatchResult[] {
   const { adminMode = false, maxResults = 10 } = options
   return matchCommands(query, maxResults, adminMode)
-}
-
-/**
- * Get commands by category
- */
-export function getCommandsByCategory(category: string): ValkeyCommand[] {
-  const commands = valkeyCommands as ValkeyCommand[]
-  return commands.filter((cmd) => cmd.category === category)
-}
-
-/**
- * Get commands by tier
- * @param tier - The tier to filter by
- * @returns Commands in the specified tier
- */
-export function getCommandsByTier(tier: "default" | "remediation" | "admin"): ValkeyCommand[] {
-  const commands = valkeyCommands as ValkeyCommand[]
-  return commands.filter((cmd) => cmd.tier === tier)
-}
-
-/**
- * Get available categories
- */
-export function getCategories(): string[] {
-  const commands = valkeyCommands as ValkeyCommand[]
-  const categories = new Set(commands.map((cmd) => cmd.category))
-  return Array.from(categories).sort()
 }

@@ -42,7 +42,7 @@ describe("text-insertion", () => {
       category: "string",
       description: "Get the value of a key",
       parameters: [{ name: "key", type: "key", required: true, placeholder: "key" }],
-      tier: "default",
+      tier: "read",
     }
 
     const pingCommand: ValkeyCommand = {
@@ -51,7 +51,7 @@ describe("text-insertion", () => {
       category: "connection",
       description: "Ping the server",
       parameters: [],
-      tier: "default",
+      tier: "read",
     }
 
     it("should insert command without placeholder", () => {

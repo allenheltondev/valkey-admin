@@ -12,7 +12,7 @@ export interface ValkeyCommand {
   category: string;
   description: string;
   parameters: ValkeyParameter[];
-  tier: "default" | "remediation" | "admin";
+  tier: "read" | "mutating" | "admin";
 }
 
 export interface MatchResult {

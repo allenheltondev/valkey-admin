@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { matchCommands, getAllCommands, getCategories } from "../utils/valkey-command-matching"
+import { matchCommands } from "../utils/valkey-command-matching"
 
 describe("Valkey Command Matching", () => {
   it("should return empty array for empty query", () => {
@@ -50,24 +50,6 @@ describe("Valkey Command Matching", () => {
     expect(rpushResult).toBeDefined()
     expect(lpushResult?.matchType).toBe("contains")
     expect(rpushResult?.matchType).toBe("contains")
-  })
-
-  it("should return all commands", () => {
-    const commands = getAllCommands()
-    expect(commands.length).toBeGreaterThan(0)
-    expect(commands[0]).toHaveProperty("name")
-    expect(commands[0]).toHaveProperty("syntax")
-    expect(commands[0]).toHaveProperty("category")
-    expect(commands[0]).toHaveProperty("description")
-    expect(commands[0]).toHaveProperty("parameters")
-  })
-
-  it("should return available categories", () => {
-    const categories = getCategories()
-    expect(categories.length).toBeGreaterThan(0)
-    expect(categories).toContain("string")
-    expect(categories).toContain("hash")
-    expect(categories).toContain("list")
   })
 
   it("should handle case insensitive matching", () => {

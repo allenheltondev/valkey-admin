@@ -19,7 +19,7 @@ describe("Valkey Command Database Validation", () => {
       expect(typeof command.category).toBe("string")
       expect(typeof command.description).toBe("string")
       expect(Array.isArray(command.parameters)).toBe(true)
-      expect(["default", "remediation", "admin"]).toContain(command.tier)
+      expect(["read", "mutating", "admin"]).toContain(command.tier)
     })
   })
 
@@ -93,17 +93,17 @@ describe("Valkey Command Database Validation", () => {
   })
 
   it("should have proper tier distribution", () => {
-    const defaultCommands = commands.filter((c) => c.tier === "default")
-    const remediationCommands = commands.filter((c) => c.tier === "remediation")
+    const readCommands = commands.filter((c) => c.tier === "read")
+    const mutatingCommands = commands.filter((c) => c.tier === "mutating")
     const adminCommands = commands.filter((c) => c.tier === "admin")
 
     // Should have commands in each tier
-    expect(defaultCommands.length).toBeGreaterThan(0)
-    expect(remediationCommands.length).toBeGreaterThan(0)
+    expect(readCommands.length).toBeGreaterThan(0)
+    expect(mutatingCommands.length).toBeGreaterThan(0)
     expect(adminCommands.length).toBeGreaterThan(0)
 
-    // Default tier should have the most commands (inspection/exploration)
-    expect(defaultCommands.length).toBeGreaterThanOrEqual(remediationCommands.length)
+    // Read tier should have the most commands (inspection/exploration)
+    expect(readCommands.length).toBeGreaterThanOrEqual(mutatingCommands.length)
   })
 
   it("should have dangerous commands in admin tier", () => {
@@ -117,19 +117,19 @@ describe("Valkey Command Database Validation", () => {
     })
   })
 
-  it("should have UNLINK in remediation tier (safer than DEL)", () => {
+  it("should have UNLINK in mutating tier (safer than DEL)", () => {
     const unlink = commands.find((c) => c.name === "UNLINK")
     expect(unlink).toBeDefined()
-    expect(unlink?.tier).toBe("remediation")
+    expect(unlink?.tier).toBe("mutating")
   })
 
-  it("should have inspection commands in default tier", () => {
+  it("should have inspection commands in read tier", () => {
     const inspectionCommands = ["GET", "HGET", "LRANGE", "SMEMBERS", "ZRANGE", "TYPE", "TTL", "SCAN"]
 
     inspectionCommands.forEach((cmdName) => {
       const command = commands.find((c) => c.name === cmdName)
       if (command) {
-        expect(command.tier).toBe("default")
+        expect(command.tier).toBe("read")
       }
     })
   })

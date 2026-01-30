@@ -149,21 +149,13 @@ export function AutocompleteDropdown({
         marginBottom: "0.25rem",
       }}
     >
-      {isLoading ? (
+      {isLoading || suggestions.length === 0 ? (
         <div
           aria-live="polite"
           className="px-3 py-2 text-sm text-muted-foreground"
           role="status"
         >
-          Loading suggestions...
-        </div>
-      ) : suggestions.length === 0 ? (
-        <div
-          aria-live="polite"
-          className="px-3 py-2 text-sm text-muted-foreground"
-          role="status"
-        >
-          No commands found
+          {isLoading ? "Loading suggestions..." : "No commands found"}
         </div>
       ) : (
         suggestions.map((matchResult, index) => (
