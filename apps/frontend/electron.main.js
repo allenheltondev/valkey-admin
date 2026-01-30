@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-const { app, BrowserWindow, ipcMain, safeStorage } = require("electron")
+const { app, BrowserWindow, ipcMain, safeStorage, shell } = require("electron")
 const path = require("path")
 const { fork } = require("child_process")
 
@@ -48,7 +48,7 @@ function startMetrics(serverConnectionId, serverConnectionDetails) {
   let metricsServerPath
   let configPath
 
-  const { host, port, username, password } = serverConnectionDetails
+  const { host, port, username, password, tls, verifyTlsCertificate } = serverConnectionDetails
 
   if (app.isPackaged) {
     metricsServerPath = path.join(process.resourcesPath, "server-metrics.js")
@@ -57,18 +57,33 @@ function startMetrics(serverConnectionId, serverConnectionDetails) {
     metricsServerPath = path.join(__dirname, "../../metrics/src/index.js")
     configPath = path.join(__dirname, "../../metrics/config.yml") // Path for development
   }
+  // Build the auth part (include password only if it exists)
+  const authPart = username ? (password ? `${username}:${password}@` : `${username}@`) : ""
 
+  // Build the protocol part
+  const protocol = tls ? "valkeys://" : "valkey://"
+
+  // Build query parameters for TLS verification if needed
+  const queryParams = []
+  if (tls) queryParams.push("tls=true")
+  if (verifyTlsCertificate !== undefined) queryParams.push(`insecure=${verifyTlsCertificate}`)
+
+  const queryString = queryParams.length ? `?${queryParams.join("&")}` : ""
+
+  // Combine into full URL
+  const VALKEY_URL = `${protocol}${authPart}${host}:${port}${queryString}`
   const metricsProcess = fork(metricsServerPath, [], {
     env: {
       ...process.env,
       PORT: 0,
       DATA_DIR: dataDir,
+      VALKEY_URL,
       VALKEY_HOST: host,
       VALKEY_PORT: port,
       VALKEY_USERNAME: username,
       VALKEY_PASSWORD: password,
-      VALKEY_TLS: serverConnectionDetails.tls,
-      VALKEY_VERIFY_CERT: serverConnectionDetails.verifyTlsCertificate,
+      VALKEY_TLS: tls,
+      VALKEY_VERIFY_CERT: verifyTlsCertificate,
       CONFIG_PATH: configPath, // Explicitly provide the config path
     },
   })
@@ -131,6 +146,12 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, "preload.js"),
     },
+  })
+
+  // Open external links in default browser
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url)
+    return { action: "deny" }
   })
 
   if (app.isPackaged) {
