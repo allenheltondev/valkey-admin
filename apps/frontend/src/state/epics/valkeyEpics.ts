@@ -11,7 +11,6 @@ import {
   connectPending,
   deleteConnection,
   connectRejected,
-  connectionBroken,
   startRetry,
   stopRetry,
   updateConnectionDetails,

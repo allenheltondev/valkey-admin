@@ -9,4 +9,3 @@ export const selectConnectionDetails = (id: string) => (state: RootState) => atI
 export const selectConnections = (state: RootState) => state[VALKEY.CONNECTION.name].connections
 export const selectJsonModuleAvailable = (id: string) => (state: RootState) =>
   atId(id, state)?.connectionDetails?.jsonModuleAvailable ?? false
-export const selectConnectionExists = (id: string) => (state: RootState): boolean => Boolean(atId(id, state))
