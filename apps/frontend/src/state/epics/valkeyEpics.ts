@@ -11,6 +11,7 @@ import {
   connectPending,
   deleteConnection,
   connectRejected,
+  connectionBroken,
   startRetry,
   stopRetry,
   updateConnectionDetails,
@@ -153,7 +154,7 @@ export const connectionEpic = (store: Store) =>
 // Valkey connection retry epic
 export const valkeyRetryEpic = (store: Store) =>
   action$.pipe(
-    select(connectRejected),
+    select(connectionBroken),
     switchMap(({ payload: { connectionId } }) => {
       const state = store.getState()
       const connection = state.valkeyConnection?.connections?.[connectionId]

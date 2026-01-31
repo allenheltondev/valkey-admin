@@ -243,7 +243,7 @@ export async function getKeys(
           type: VALKEY.CONNECTION.connectRejected,
           payload: {
             connectionId,
-            errorMessage: "Error adding key - Valkey instance could be down",
+            errorMessage: "Error getting key - Valkey instance could be down",
           },
         }),
       )

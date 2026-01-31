@@ -3,11 +3,13 @@ import { of, EMPTY, merge, timer } from "rxjs"
 import {
   catchError,
   mergeMap,
+  exhaustMap,
   tap,
   ignoreElements,
   filter,
   switchMap,
-  retry
+  retry,
+  take
 } from "rxjs/operators"
 import { CONNECTED, VALKEY, RETRY_CONFIG, retryDelay } from "@common/src/constants.ts"
 import { action$ } from "../middleware/rxjsMiddleware/rxjsMiddleware"
@@ -26,11 +28,11 @@ let socket$: WebSocketSubject<PayloadAction> | null = null
 const connect = (store: Store) =>
   action$.pipe(
     filter((action) => action.type === connectPending.type),
-    mergeMap(() => {
+    // Exhaust map so only one websocket is created
+    exhaustMap(() => {
       if (socket$) {
         return EMPTY
       }
-      // Create new WebSocket instance - required for retry logic to work
       const createSocket = () => {
         socket$ = webSocket({
           url: "ws://localhost:8080",
@@ -68,25 +70,28 @@ const connect = (store: Store) =>
           const socket = createSocket()
           return socket.pipe(ignoreElements())
         }),
-        // retry({
-        //   count: RETRY_CONFIG.MAX_RETRIES,
-        //   delay: (error, retryCount) => {
-        //     console.error(`WebSocket error (attempt ${retryCount}):`, error)
-
-        //     const delay = retryDelay(retryCount - 1)
-
-        //     store.dispatch(reconnectAttempt({
-        //       attempt: retryCount,
-        //       maxRetries: RETRY_CONFIG.MAX_RETRIES,
-        //       nextRetryDelay: delay,
-        //     }))
-
-        //     return timer(delay)
-        //   },
-        //   resetOnSuccess: true,
-        // }),
+        retry({
+          count: RETRY_CONFIG.MAX_RETRIES,
+          delay: (error, retryCount) => {
+            console.error(`WebSocket error (attempt ${retryCount}):`, error)
+            const delay = retryDelay(retryCount - 1)
+            store.dispatch(reconnectAttempt({
+              attempt: retryCount,
+              maxRetries: RETRY_CONFIG.MAX_RETRIES,
+              nextRetryDelay: delay,
+            }))
+            return action$.pipe(
+              filter((action) =>
+                !store.getState()["websocket"].reconnect.retriesPaused || action.type === "websocket/resumeRetries",
+              ),
+              take(1),
+              switchMap(() => timer(delay)),
+            )
+          },
+          resetOnSuccess: true,
+        }),
         catchError((err) => {
-          console.error("WebSocket connection failed permanently:", err)
+          console.error("WebSocket connection error:", err)
           store.dispatch(reconnectExhausted())
           store.dispatch(connectRejected(err))
           return EMPTY
