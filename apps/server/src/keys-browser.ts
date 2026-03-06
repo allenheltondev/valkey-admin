@@ -23,6 +23,84 @@ interface EnrichedKeyInfo {
   elements?: any; // this can be array, object, or string depending on the key type.
 }
 
+async function getScanKeyInfo(
+  client: GlideClient | GlideClusterClient,
+  keyInfo: EnrichedKeyInfo,
+  commands: { sizeCmd: string; elementsCmd: string[] },
+): Promise<EnrichedKeyInfo> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const results = new Set<any>()
+    const isHash = keyInfo.type.toLowerCase() === "hash"
+    let cursor = "0"
+    
+    // This Promise.all 1) gets the Key's collection size, and 2) fills the result set with the collection's values.
+    // The side-effect promise is used result set is filled with a SCAN style command (requiring repeated queries with the cursor).
+    const [collectionSize] = await Promise.all([
+      client.customCommand([commands.sizeCmd, keyInfo.name]),
+      (async () => {
+        do {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const [newCursor, elements] = await client.customCommand([...commands.elementsCmd, cursor]) as [string, any[]]
+
+          if (isHash) {
+            // Hash key types require constructing an object from a flat array.
+            // i.e. converting [key1, value1...] to [{key: key1, value}]
+            for (let i = 0; i < elements.length; i += 2){
+              results.add({ key: elements[i], value: elements[i + 1] })
+            }
+          } else {
+            elements.forEach((element) => results.add(element))
+          }
+          cursor = newCursor
+        } while (cursor !== "0")
+      })(),
+    ])
+
+    return {
+      ...keyInfo,
+      collectionSize: collectionSize as number,
+      elements: Array.from(results),
+    }
+  } catch (err) {
+    console.log(`Could not get elements for key ${keyInfo.name}:`, err)
+    return keyInfo
+  }
+}
+
+async function getFullKeyInfo(
+  client: GlideClient | GlideClusterClient,
+  keyInfo: EnrichedKeyInfo,
+  commands: { sizeCmd: string; elementsCmd: string[] },
+): Promise<EnrichedKeyInfo>{
+  try {
+    const promises = [client.customCommand(commands.elementsCmd)]
+
+    if (commands.sizeCmd) {
+      promises.push(client.customCommand([commands.sizeCmd, keyInfo.name]))
+    }
+
+    const results = await Promise.all(promises)
+
+    if (commands.sizeCmd) {
+      return {
+        ...keyInfo,
+        collectionSize: results[1] as number,
+        elements: results[0],
+      }
+    } else {
+      // in case of string with no collectionSize
+      return {
+        ...keyInfo,
+        elements: results[0],
+      }
+    }
+  } catch (err) {
+    console.log(`Could not get elements for key ${keyInfo.name}:`, err)
+    return keyInfo
+  }
+}
+
 export async function getKeyInfo(
   client: GlideClient | GlideClusterClient,
   key: string,
@@ -42,55 +120,46 @@ export async function getKeyInfo(
     }
 
     // Get collection size and elements for each type
-    try {
-      const elementCommands: Record<
-        string,
-        { sizeCmd: string; elementsCmd: string[] }
-      > = {
-        list: { sizeCmd: "LLEN", elementsCmd: ["LRANGE", key, "0", "-1"] },
-        set: { sizeCmd: "SCARD", elementsCmd: ["SMEMBERS", key] },
-        zset: {
-          sizeCmd: "ZCARD",
-          elementsCmd: ["ZRANGE", key, "0", "-1", "WITHSCORES"],
-        },
-        hash: { sizeCmd: "HLEN", elementsCmd: ["HGETALL", key] },
-        stream: { sizeCmd: "XLEN", elementsCmd: ["XRANGE", key, "-", "+"] },
-        string: { sizeCmd: "", elementsCmd: ["GET", key] },
-        "rejson-rl": { sizeCmd: "", elementsCmd: ["JSON.GET", key] },
-      }
-
-      const commands = elementCommands[keyType.toLowerCase()]
-      if (commands) {
-        if (memoryUsage > VALKEY_CLIENT.KEY_VALUE_SIZE_LIMIT) {
-          if (commands.sizeCmd){
-            keyInfo.collectionSize = await (client.customCommand([commands.sizeCmd, key])) as number
-          }
-          keyInfo.elements = `This key is ${formatBytes(memoryUsage)}, which is larger than the maximum display size of ${formatBytes(VALKEY_CLIENT.KEY_VALUE_SIZE_LIMIT)}.`
-
-          return keyInfo
-        } 
-
-        const promises = []
-
-        if (commands.sizeCmd) {
-          promises.push(client.customCommand([commands.sizeCmd, key]))
-        }
-        promises.push(client.customCommand(commands.elementsCmd))
-
-        const results = await Promise.all(promises)
-
-        if (commands.sizeCmd) {
-          keyInfo.collectionSize = results[0] as number
-          keyInfo.elements = results[1]
-        } else {
-          keyInfo.elements = results[0] // in case of string
-        }
-      }
-    } catch (err) {
-      console.error(`Could not get elements for key ${key}:`, err)
+    const elementCommands: Record<
+      string,
+      { sizeCmd: string; elementsCmd: string[] }
+    > = {
+      list: { sizeCmd: "LLEN", elementsCmd: ["LRANGE", key, "0", "-1"] },
+      zset: {
+        sizeCmd: "ZCARD",
+        elementsCmd: ["ZRANGE", key, "0", "-1", "WITHSCORES"],
+      },
+      stream: { sizeCmd: "XLEN", elementsCmd: ["XRANGE", key, "-", "+"] },
+      string: { sizeCmd: "", elementsCmd: ["GET", key] },
+      "rejson-rl": { sizeCmd: "", elementsCmd: ["JSON.GET", key] },
+      // Scan
+      set: { sizeCmd: "SCARD", elementsCmd: ["SSCAN", keyInfo.name] },
+      hash: { sizeCmd: "HLEN", elementsCmd: ["HSCAN", keyInfo.name] },
     }
 
-    return keyInfo
+    const commands = elementCommands[keyType.toLowerCase()]
+    if (!commands) {
+      console.log(`Could not get commands for key type ${keyType.toLowerCase()}`)
+      return keyInfo
+    }
+
+    if (memoryUsage > VALKEY_CLIENT.KEY_VALUE_SIZE_LIMIT) {
+      if (commands.sizeCmd){
+        keyInfo.collectionSize = await (client.customCommand([commands.sizeCmd, key])) as number
+      }
+      keyInfo.elements = `This key is ${formatBytes(memoryUsage)}, which is larger than the maximum display size of ${formatBytes(VALKEY_CLIENT.KEY_VALUE_SIZE_LIMIT)}.`
+
+      return keyInfo
+    }
+
+    switch (keyType.toLowerCase()) {
+      case "set":
+      case "hash":
+        return await getScanKeyInfo(client, keyInfo, commands)
+      default:
+        return await getFullKeyInfo(client, keyInfo, commands)
+    }
+
   } catch (err) {
     console.error("Error getting key", err)
     return {
