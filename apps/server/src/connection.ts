@@ -25,7 +25,7 @@ export async function connectToValkey(
       port: Number(payload.connectionDetails.port),
     },
   ]
-  const credentials: ServerCredentials | undefined = 
+  const credentials: ServerCredentials | undefined =
     payload.connectionDetails.password ? {
       username: payload.connectionDetails.username,
       password: payload.connectionDetails.password,
@@ -58,21 +58,21 @@ export async function connectToValkey(
       clientName: "test_client",
     })
     clients.set(payload.connectionId, { client: standaloneClient })
-    
+
     const evictionPolicyResponse = await standaloneClient.customCommand(["CONFIG", "GET", "maxmemory-policy"]) as [{key: string, value: string}]
     const keyEvictionPolicy: KeyEvictionPolicy = evictionPolicyResponse[0].value.toLowerCase() as KeyEvictionPolicy
     const jsonModuleAvailable = await checkJsonModuleAvailability(standaloneClient)
-    
+
     if (await belongsToCluster(standaloneClient)) {
       return connectToCluster(
-        standaloneClient, 
-        ws, 
-        clients, 
-        payload, 
-        addresses, 
-        credentials, 
-        keyEvictionPolicy, 
-        jsonModuleAvailable, 
+        standaloneClient,
+        ws,
+        clients,
+        payload,
+        addresses,
+        credentials,
+        keyEvictionPolicy,
+        jsonModuleAvailable,
         clusterNodesMap,
         metricsServerURIs,
       )
@@ -160,7 +160,7 @@ async function discoverCluster(client: GlideClient, payload: {
     }, {} as Record<string, {
       host: string;
       port: number;
-      username?: string, 
+      username?: string,
       password?: string,
       tls: boolean,
       verifyTlsCertificate: boolean,
@@ -170,8 +170,8 @@ async function discoverCluster(client: GlideClient, payload: {
     return { clusterNodes, clusterId }
   } catch (err) {
     console.error("Error discovering cluster:", err)
-    throw new Error("Failed to discover cluster") 
-    
+    throw new Error("Failed to discover cluster")
+
   }
 }
 
@@ -194,10 +194,10 @@ async function connectToCluster(
   }
   const useTLS = payload.connectionDetails.tls
 
-  let clusterClient 
+  let clusterClient
   standaloneClient.close()
 
-  // Check if a node from the same cluster has already been connected 
+  // Check if a node from the same cluster has already been connected
   const existingKey = Object.keys(clusterNodes).find(
     (key) => clients.get(key) instanceof GlideClusterClient,
   )
@@ -217,7 +217,7 @@ async function connectToCluster(
         payload: { existingClusterId, clusterNodes },
       }),
     )
-  } 
+  }
   else {
     ws.send(
       JSON.stringify({
@@ -246,8 +246,7 @@ async function connectToCluster(
   const clusterSlotStatsResponse = await clusterClient.customCommand(
     ["CONFIG", "GET", "cluster-slot-stats-enabled"],
   ) as [Record<string, string>]
-  const clusterSlotStatsEnabled = clusterSlotStatsResponse[0].value === "yes" 
-
+  const clusterSlotStatsEnabled = clusterSlotStatsResponse[0].value === "yes"
   const clusterConnectionInfo = {
     type: VALKEY.CONNECTION.clusterConnectFulfilled,
     payload: {
@@ -271,26 +270,26 @@ async function connectToCluster(
 }
 
 export async function isDuplicateConnection(
-  payload:{connectionId: string, connectionDetails: ConnectionDetails}, 
+  payload:{connectionId: string, connectionDetails: ConnectionDetails},
   clients: Map<string, {client: GlideClient | GlideClusterClient, clusterId?: string}>,
-) 
+)
 {
   const { connectionId, connectionDetails } = payload
   const resolvedAddresses = (await resolveHostnameOrIpAddress(connectionDetails.host)).addresses
-  // Prevent duplicate connections: 
+  // Prevent duplicate connections:
   // 1) True if any resolved host:port is already connected
   // 2) Or if this connectionId already exists as a standalone connection
-  return (resolvedAddresses.some((address) => clients.has(sanitizeUrl(`${address}:${connectionDetails.port}`))) || 
+  return (resolvedAddresses.some((address) => clients.has(sanitizeUrl(`${address}:${connectionDetails.port}`))) ||
   (clients.has(connectionId) && clients.get(connectionId)?.client instanceof GlideClient))
 }
 
 export async function closeMetricsServer(connectionId: string, metricsServerURIs: Map<string, string>) {
   const metricsServer = metricsServerURIs.get(connectionId)
   if (metricsServer) {
-    const res = await fetch(`${metricsServer}/connection/close`, 
-      { method: "POST", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify({ connectionId }), 
+    const res = await fetch(`${metricsServer}/connection/close`,
+      { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connectionId }),
       })
     if (res.ok) {
       metricsServerURIs.delete(connectionId)
@@ -323,5 +322,5 @@ export async function closeClient(
       )
     }
   }
- 
+
 }

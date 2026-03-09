@@ -47,9 +47,9 @@ export const connectionEpic = (store: Store) =>
       mergeMap(async (action) => {
         const { password } = action.payload.connectionDetails
         if (R.isNil(password)) return action
-        
+
         const decryptedPassword = await secureStorage.decrypt(password)
-        
+
         return R.assocPath(
           ["payload", "connectionDetails", "password"],
           decryptedPassword,
@@ -128,7 +128,7 @@ export const connectionEpic = (store: Store) =>
               username: "",
               password: "",
               tls: false,
-              verifyTlsCertificate: false, 
+              verifyTlsCertificate: false,
               alias: alias || "Valkey Cluster",
             },
             connectionId,
@@ -302,7 +302,7 @@ export const updateConnectionDetailsEpic = (store: Store) =>
               connection.connectionDetails,
             )
             : connection.connectionDetails
-          
+
           currentConnections[connectionId].connectionDetails = connectionDetails
           currentConnections[connectionId].connectionHistory = connection.connectionHistory || []
           localStorage.setItem(LOCAL_STORAGE.VALKEY_CONNECTIONS, JSON.stringify(currentConnections))
