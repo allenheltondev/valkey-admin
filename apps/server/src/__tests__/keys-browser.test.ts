@@ -61,7 +61,7 @@ describe("getKeyInfo", () => {
 
     describe("string keys with non-readable data", () => {
       it("should return 'Not human readable' for string with binary value", async () => {
-        const binaryValue = "test\uFFFDdata"
+        const binaryValue = "test\x00\x01\x02data"
         const mockClient = createMockClient({
           TYPE: "string",
           TTL: -1,
@@ -120,7 +120,7 @@ describe("getKeyInfo", () => {
 
     describe("hash keys with non-readable data", () => {
       it("should return 'Not human readable' for hash with binary values", async () => {
-        const binaryValue = "test\uFFFDdata"
+        const binaryValue = "test\x00\x01\x02data"
         const mockClient = createMockClient({
           TYPE: "hash",
           TTL: -1,
@@ -140,7 +140,7 @@ describe("getKeyInfo", () => {
       })
 
       it("should filter mix of readable and non-readable hash values appropriately", async () => {
-        const binaryValue = "test\uFFFDdata"
+        const binaryValue = "test\x00\x01\x02data"
         const mockClient = createMockClient({
           TYPE: "hash",
           TTL: -1,
@@ -159,7 +159,7 @@ describe("getKeyInfo", () => {
       })
 
       it("should return 'Not human readable' for hash with non-readable keys", async () => {
-        const binaryKey = "key\uFFFDtest"
+        const binaryKey = "key\x00\x01\x02test"
         const mockClient = createMockClient({
           TYPE: "hash",
           TTL: -1,
@@ -180,7 +180,7 @@ describe("getKeyInfo", () => {
 
   describe("set keys with non-readable data", () => {
     it("should return 'Not human readable' for set with binary data elements", async () => {
-      const binaryData = "test\uFFFDdata"
+      const binaryData = "test\x00\x01\x02data"
       const mockClient = createMockClient({
         TYPE: "set",
         TTL: -1,
@@ -200,7 +200,7 @@ describe("getKeyInfo", () => {
     })
 
     it("should filter mix of readable and non-readable set elements appropriately", async () => {
-      const binaryData = "test\uFFFDdata"
+      const binaryData = "test\x00\x01\x02data"
       const mockClient = createMockClient({
         TYPE: "set",
         TTL: -1,
@@ -241,7 +241,7 @@ describe("getKeyInfo", () => {
     })
 
     it("should filter binary data in list elements", async () => {
-      const binaryData = "test\uFFFDdata"
+      const binaryData = "test\x00\x01\x02data"
       const mockClient = createMockClient({
         TYPE: "list",
         TTL: -1,
@@ -270,7 +270,7 @@ describe("getKeyInfo", () => {
         TTL: -1,
         MEMORY: 200,
         ZCARD: 2,
-        ZRANGE: ["member1", "1.5", "member2", "2.5"],
+        ZRANGE: [{key: "member1", value: "1.5"}, {key: "member2", value: "2.5"}],
       })
 
       const result = await getKeyInfo(mockClient as any, "myzset")
@@ -279,18 +279,18 @@ describe("getKeyInfo", () => {
       assert.strictEqual(result.type, "zset")
       assert.strictEqual(result.collectionSize, 2)
       assert.ok(Array.isArray(result.elements))
-      // ZRANGE with WITHSCORES returns [member1, score1, member2, score2, ...]
-      assert.deepStrictEqual(result.elements, ["member1", "1.5", "member2", "2.5"])
+      // RESP3 ZRANGE with WITHSCORES returns [{key: member, value: score}, ...]
+      assert.deepStrictEqual(result.elements, [{key: "member1", value: 1.5}, {key: "member2", value: 2.5}])
     })
 
     it("should filter binary data in zset members", async () => {
-      const binaryMember = "member\uFFFDtest"
+      const binaryMember = "member\x00\x01\x02test"
       const mockClient = createMockClient({
         TYPE: "zset",
         TTL: -1,
         MEMORY: 200,
         ZCARD: 3,
-        ZRANGE: ["readable", "1.0", binaryMember, "2.0", "alsoreadable", "3.0"],
+        ZRANGE: [{key: "readable", value: "1.0"}, {key: binaryMember, value: "2.0"}, {key: "alsoreadable", value: "3.0"}],
       })
 
       const result = await getKeyInfo(mockClient as any, "myzset")
@@ -299,13 +299,10 @@ describe("getKeyInfo", () => {
       assert.strictEqual(result.type, "zset")
       assert.strictEqual(result.collectionSize, 3)
       assert.ok(Array.isArray(result.elements))
-      const elements = result.elements as string[]
-      assert.strictEqual(elements[0], "readable")
-      assert.strictEqual(elements[1], "1.0")
-      assert.strictEqual(elements[2], "Not human readable")
-      assert.strictEqual(elements[3], "2.0")
-      assert.strictEqual(elements[4], "alsoreadable")
-      assert.strictEqual(elements[5], "3.0")
+      const elements = result.elements as any[]
+      assert.deepStrictEqual(elements[0], {key: "readable", value: 1.0})
+      assert.deepStrictEqual(elements[1], {key: "Not human readable", value: 2.0})
+      assert.deepStrictEqual(elements[2], {key: "alsoreadable", value: 3.0})
     })
   })
 
@@ -336,8 +333,8 @@ describe("getKeyInfo", () => {
     })
 
     it("should filter binary data in stream field names and values", async () => {
-      const binaryField = "field\uFFFDtest"
-      const binaryValue = "value\uFFFDtest"
+      const binaryField = "field\x00\x01\x02test"
+      const binaryValue = "value\x00\x01\x02test"
       const mockClient = createMockClient({
         TYPE: "stream",
         TTL: -1,
@@ -359,7 +356,7 @@ describe("getKeyInfo", () => {
       
       // First entry
       assert.strictEqual(elements[0][0], "1234567890-0")
-      const firstFields = elements[0][1] as string[]
+      const firstFields = elements[0][1] as unknown as string[]
       assert.strictEqual(firstFields[0], "readable_field")
       assert.strictEqual(firstFields[1], "readable_value")
       assert.strictEqual(firstFields[2], "Not human readable")
@@ -367,7 +364,7 @@ describe("getKeyInfo", () => {
       
       // Second entry
       assert.strictEqual(elements[1][0], "1234567891-0")
-      const secondFields = elements[1][1] as string[]
+      const secondFields = elements[1][1] as unknown as string[]
       assert.strictEqual(secondFields[0], "field1")
       assert.strictEqual(secondFields[1], "Not human readable")
     })
@@ -391,7 +388,7 @@ describe("getKeyInfo", () => {
     })
 
     it("should return 'Not human readable' for JSON with binary data", async () => {
-      const binaryJson = '{"name":"test\uFFFD","value":123}'
+      const binaryJson = '{"name":"test\x00\x01\x02\x03\x04\x05","value":123}'
       const mockClient = createMockClient({
         TYPE: "rejson-rl",
         TTL: -1,
@@ -427,7 +424,7 @@ describe("getKeyInfo", () => {
 
 describe("getScanKeyInfo", () => {
   it("should properly filter binary data in hash scan", async () => {
-    const binaryValue = "test\uFFFDdata"
+    const binaryValue = "test\x00\x01\x02data"
     const mockClient = {
       customCommand: mock.fn(async (cmd: string[]) => {
         if (cmd[0] === "TYPE") return "hash"
@@ -450,7 +447,7 @@ describe("getScanKeyInfo", () => {
   })
 
   it("should properly filter binary data in set scan", async () => {
-    const binaryData = "test\uFFFDdata"
+    const binaryData = "test\x00\x01\x02data"
     const mockClient = {
       customCommand: mock.fn(async (cmd: string[]) => {
         if (cmd[0] === "TYPE") return "set"
@@ -476,7 +473,7 @@ describe("getScanKeyInfo", () => {
 
 describe("getFullKeyInfo", () => {
   it("should return 'Not human readable' for string value with binary data", async () => {
-    const binaryValue = "test\uFFFDdata"
+    const binaryValue = "test\x00\x01\x02data"
     const mockClient = createMockClient({
       TYPE: "string",
       TTL: -1,
@@ -492,7 +489,7 @@ describe("getFullKeyInfo", () => {
   })
 
   it("should return 'Not human readable' for collection with binary data", async () => {
-    const binaryData = "test\uFFFDdata"
+    const binaryData = "test\x00\x01\x02data"
     const mockClient = createMockClient({
       TYPE: "list",
       TTL: -1,
