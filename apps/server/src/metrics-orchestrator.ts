@@ -48,6 +48,8 @@ export const isWebMode = process.env.DEPLOYMENT_MODE === DEPLOYMENT_TYPE.WEB
 export const isKubernetes = process.env.DEPLOYMENT_MODE === DEPLOYMENT_TYPE.K8
 export const isElectron = process.env.DEPLOYMENT_MODE === DEPLOYMENT_TYPE.ELECTRON
 
+export const preConfiguredConnection = process.env.VALKEY_HOST && process.env.VALKEY_PORT
+
 // Validate env variable so it matches EndpointType
 const endpointType = process.env.VALKEY_ENDPOINT_TYPE === "node" ? "node" : "cluster-endpoint"
 
@@ -335,8 +337,9 @@ export async function reconcileClusterMetricsServers(
   metricsServerMap: MetricsServerMap, 
   connectionDetails: ConnectionDetails, 
 ) {
-  let clusterIds = Object.keys(clusterNodesRegistry) 
-  if (clusterIds.length === 0) {
+  let clusterIds = Object.keys(clusterNodesRegistry)
+  // Start metrics server for all nodes if it is preconfigured before manual connection
+  if (clusterIds.length === 0 && preConfiguredConnection) {
     try {
       const client = await getInitialClient()
       const { discoveredClusterNodes, clusterId } = await internals.getClusterTopology(client, connectionDetails)
@@ -349,21 +352,23 @@ export async function reconcileClusterMetricsServers(
       console.error(err)
     }
   }
-  await Promise.all(
-    clusterIds.map(async (clusterId) => {
-      try {
-        const { nodesToAdd, nodesToRemove } = await internals.findDiff(metricsServerMap, clusterNodesRegistry[clusterId])
-        // Early return if nothing has changed
-        if (Object.keys(nodesToAdd).length === 0 && nodesToRemove.length === 0) {
-          console.debug("Cluster nodes and metrics servers are in sync")
-          return
+  else if (clusterIds.length > 0) {
+    await Promise.all(
+      clusterIds.map(async (clusterId) => {
+        try {
+          const { nodesToAdd, nodesToRemove } = await internals.findDiff(metricsServerMap, clusterNodesRegistry[clusterId])
+          // Early return if nothing has changed
+          if (Object.keys(nodesToAdd).length === 0 && nodesToRemove.length === 0) {
+            console.debug("Cluster nodes and metrics servers are in sync")
+            return
+          }
+          await internals.updateMetricsServers(nodesToAdd, nodesToRemove, clusterId)
+        } catch (err) {
+          console.error(`Failed to reconcile metrics servers for cluster ${clusterId}:`, err)
         }
-        await internals.updateMetricsServers(nodesToAdd, nodesToRemove, clusterId)
-      } catch (err) {
-        console.error(`Failed to reconcile metrics servers for cluster ${clusterId}:`, err)
-      }
-    }),
-  )
+      }),
+    )
+  }
 }
 
 export function cleanupOrchestratorResources() {
